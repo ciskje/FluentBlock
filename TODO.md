@@ -128,6 +128,9 @@ Goal: faster, robust scan following the real handle64.exe flow
 - [x] Automatic elevation triggers: file check when user-level scan finds 0 locks, eject when vetoed/insufficient rights, manual Refresh (`F5`) on an empty drive, or click on the status bar indicator
 - [x] UX &amp; logic fixes: deduplicate handles by `(Pid, FilePath)` instead of `FilePath` alone; status dot returns to green (`SuccessBrush`) when 0 locks found; `Enter` key in `FilePathBox` and `Browse…` auto-start file check; `FileHoldersGrid` localized with `User`/`Handle` columns + context menu + RM user resolution; `WM_DEVICECHANGE` debounced (350 ms) preserving selected drive; `SaveFileDialog` for CSV/TSV export; side drive list auto-collapses when &lt;= 1 drive
 - [x] `AboutText` 0.2.18; `VERSION`+csproj `0.2.18`; green build + green tests
+- [x] Manual smoke: Release exe launched, window alive, elevated worker connected on demand (user-closed)
+- [x] Tag `v0.2.18`
+- [x] Release v0.2.18 (Latest): `dist/` realigned (exe+setup-0.2.18+msix+README+VERSION.txt), GitHub release with 3 assets
 
 ## 0.2.17 — start as standard user
 
