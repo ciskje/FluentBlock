@@ -1,249 +1,307 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Windows;
+using System.IO.Pipes;
+using System.Text;
+using System.Text.Json;
+using FluentSblock.Models;
 
 namespace FluentSblock.Services;
 
-/// <summary>Restarts the app with a different integrity level (Admin ↔ User).</summary>
+/// <summary>
+/// Manages an on-demand, headless elevated worker process (--worker) over a
+/// local Named Pipe so the WPF UI always stays at standard-user integrity
+/// (preserving Explorer OLE drag &amp; drop and window state).
+/// </summary>
 public static class ElevationService
 {
+    private static readonly SemaphoreSlim PipeLock = new(1, 1);
+    private static NamedPipeServerStream? _pipe;
+    private static StreamReader? _reader;
+    private static StreamWriter? _writer;
+    private static Process? _workerProc;
+
+    public static event Action? StateChanged;
+
+    public static bool IsElevatedOrWorkerActive =>
+        ThemeService.IsElevated()
+        || (_pipe is { IsConnected: true } && _workerProc is { HasExited: false });
+
     private static string ExePath =>
         Environment.ProcessPath
         ?? Process.GetCurrentProcess().MainModule?.FileName
         ?? "";
 
-    private static string PreservedArgs()
+    public sealed record WorkerRequest(string Op, string Target, int TimeoutMs, string Lang);
+
+    public sealed record WorkerMessage(
+        string Kind,
+        string? Text,
+        List<LockHolder>? Holders,
+        EjectService.EjectResult? Eject,
+        string? Error);
+
+    private sealed class SyncProgress(Action<string> report) : IProgress<string>
     {
-        var args = Environment.GetCommandLineArgs().Skip(1).ToList();
-        args.RemoveAll(a => a.Equals("--user", StringComparison.OrdinalIgnoreCase));
-        return string.Join(" ", args.Select(Quote));
+        public void Report(string value) => report(value);
     }
 
-    private static string Quote(string a) =>
-        a.Contains(' ') || a.Contains('"') ? "\"" + a.Replace("\"", "\"\"") + "\"" : a;
-
-    /// <summary>Relaunches elevated via UAC. Returns false when the user cancels.</summary>
-    public static bool RestartAsAdmin()
+    /// <summary>Starts the background elevated worker if not already running.</summary>
+    public static async Task<bool> EnsureWorkerAsync(CancellationToken ct = default)
     {
+        if (ThemeService.IsElevated()) return true;
+        await PipeLock.WaitAsync(ct);
         try
         {
-            Process.Start(new ProcessStartInfo(ExePath, PreservedArgs())
-            {
-                UseShellExecute = true,
-                Verb = "runas"
-            });
-            Application.Current.Shutdown();
-            return true;
+            return await EnsureConnectedCoreAsync(ct);
         }
-        catch { return false; }
-    }
-
-    /// <summary>
-    /// Relaunches without elevation. First tries the Explorer shell token
-    /// (medium integrity, silent, exact args); falls back to runas with the
-    /// basic-user trust level (no UAC prompt, exact args).
-    /// </summary>
-    public static bool RestartAsUser()
-    {
-        string args = PreservedArgs();
-        var before = new HashSet<int>();
-        try
-        {
-            foreach (var p in Process.GetProcessesByName("FluentSblock"))
-            {
-                using (p) before.Add(p.Id);
-            }
-        }
-        catch { }
-        if (TryRestartAsUserViaToken(args)
-            || TryRestartAsUserViaRunas(args, before))
-        {
-            Application.Current.Shutdown();
-            return true;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Creates the child directly with a duplicated Explorer token.
-    /// Needs SeImpersonate/SeIncreaseQuota: present when the caller is
-    /// elevated (the normal case here), absent for standard users.
-    /// </summary>
-    private static bool TryRestartAsUserViaToken(string args)
-    {
-        IntPtr hProc = IntPtr.Zero, hTok = IntPtr.Zero,
-               hPrimary = IntPtr.Zero, env = IntPtr.Zero,
-               hChildProc = IntPtr.Zero, hChildThread = IntPtr.Zero;
-        try
-        {
-            uint pid = ShellProcessId();
-            if (pid == 0) return false;
-            hProc = OpenProcess(PROCESS_QUERY_INFORMATION, false, pid);
-            if (hProc == IntPtr.Zero) return false;
-            if (!OpenProcessToken(hProc, TOKEN_DUPLICATE | TOKEN_QUERY, out hTok)
-                || hTok == IntPtr.Zero) return false;
-            if (!DuplicateTokenEx(hTok, MAXIMUM_ALLOWED, IntPtr.Zero,
-                    SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                    TOKEN_TYPE.TokenPrimary, out hPrimary)
-                || hPrimary == IntPtr.Zero) return false;
-            CreateEnvironmentBlock(out env, hPrimary, false); // best effort
-            var si = new STARTUPINFO();
-            si.cb = Marshal.SizeOf<STARTUPINFO>();
-            si.lpDesktop = "winsta0\\default";
-            string cmd = "\"" + ExePath + "\"" + (args.Length > 0 ? " " + args : "");
-            if (!CreateProcessWithTokenW(hPrimary, 0, null, cmd,
-                    NORMAL_PRIORITY_CLASS | CREATE_UNICODE_ENVIRONMENT,
-                    env, Path.GetDirectoryName(ExePath),
-                    ref si, out PROCESS_INFORMATION pi)) return false;
-            hChildProc = pi.hProcess;
-            hChildThread = pi.hThread;
-            return true;
-        }
-        catch { return false; }
         finally
         {
-            foreach (var h in new[] { hChildThread, hChildProc, hPrimary, hTok, hProc })
-                if (h != IntPtr.Zero) { try { CloseHandle(h); } catch { } }
-            if (env != IntPtr.Zero) { try { DestroyEnvironmentBlock(env); } catch { } }
+            PipeLock.Release();
         }
     }
 
-    /// <summary>
-    /// Fallback: runas with the basic-user trust level. Needs no caller
-    /// privileges and never prompts; waits for the child to appear so a
-    /// quoting failure never kills the running instance for nothing.
-    /// </summary>
-    private static bool TryRestartAsUserViaRunas(string args, HashSet<int> before)
+    public static async Task<List<LockHolder>?> TryScanDriveElevatedAsync(
+        string driveLetter, IProgress<string>? progress, CancellationToken ct)
     {
+        if (ThemeService.IsElevated())
+            return await HandleEnumerator.GetHoldersForDriveAsync(driveLetter, progress, ct);
+        var msg = await SendRequestAsync("drive", driveLetter, progress, ct);
+        return msg?.Holders;
+    }
+
+    public static async Task<List<LockHolder>?> TryScanPathElevatedAsync(
+        string path, IProgress<string>? progress, CancellationToken ct)
+    {
+        if (ThemeService.IsElevated())
+            return await HandleEnumerator.GetHoldersForPathAsync(path, progress, ct);
+        var msg = await SendRequestAsync("path", path, progress, ct);
+        return msg?.Holders;
+    }
+
+    public static async Task<EjectService.EjectResult?> TryEjectElevatedAsync(
+        string driveLetter, CancellationToken ct)
+    {
+        if (ThemeService.IsElevated())
+            return await EjectService.TryEjectAsync(driveLetter, ct);
+        var msg = await SendRequestAsync("eject", driveLetter, null, ct);
+        return msg?.Eject;
+    }
+
+    private static async Task<WorkerMessage?> SendRequestAsync(
+        string op, string target, IProgress<string>? progress, CancellationToken ct)
+    {
+        await PipeLock.WaitAsync(ct);
         try
         {
-            // Program operand is one quoted unit: "\"exe\" args".
-            string program = ("\\\"" + ExePath + "\\\" " + args).TrimEnd();
-            var psi = new ProcessStartInfo("runas.exe", "/trustlevel:0x20000 \"" + program + "\"")
+            if (!await EnsureConnectedCoreAsync(ct) || _writer == null || _reader == null)
+                return null;
+
+            var req = new WorkerRequest(
+                op,
+                target,
+                HandleEnumerator.QueryNameTimeoutMs,
+                CultureInfo.CurrentUICulture.Name);
+
+            await _writer.WriteLineAsync(JsonSerializer.Serialize(req));
+            while (await _reader.ReadLineAsync() is { } line)
             {
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var runas = Process.Start(psi);
-            if (runas == null) return false;
-            var sw = Stopwatch.StartNew();
-            while (sw.Elapsed < TimeSpan.FromSeconds(10))
-            {
-                try
+                var msg = JsonSerializer.Deserialize<WorkerMessage>(line);
+                if (msg == null) continue;
+                if (msg.Kind == "progress")
                 {
-                    foreach (var c in Process.GetProcessesByName("FluentSblock"))
-                    {
-                        using (c)
-                        {
-                            if (!before.Contains(c.Id)) return true;
-                        }
-                    }
+                    if (msg.Text != null) progress?.Report(msg.Text);
+                    continue;
                 }
-                catch { }
-                Thread.Sleep(300);
+                if (msg.Kind == "result")
+                {
+                    ct.ThrowIfCancellationRequested();
+                    if (!string.IsNullOrEmpty(msg.Error))
+                        throw new InvalidOperationException(msg.Error);
+                    return msg;
+                }
             }
+            ResetWorkerCore();
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Log.Info($"worker ipc error: {ex.Message}");
+            ResetWorkerCore();
+            return null;
+        }
+        finally
+        {
+            PipeLock.Release();
+        }
+    }
+
+    private static async Task<bool> EnsureConnectedCoreAsync(CancellationToken ct)
+    {
+        if (_pipe is { IsConnected: true } && _workerProc is { HasExited: false })
+            return true;
+
+        ResetWorkerCore();
+        string pipeName = $"FluentSblock-{Environment.ProcessId}-{Guid.NewGuid():N}";
+        var server = new NamedPipeServerStream(
+            pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        try
+        {
+            var waitTask = server.WaitForConnectionAsync(ct);
+            var psi = new ProcessStartInfo(ExePath, $"--worker {pipeName} {Environment.ProcessId}")
+            {
+                UseShellExecute = true,
+                Verb = "runas",
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+            var proc = Process.Start(psi);
+            if (proc == null)
+            {
+                server.Dispose();
+                return false;
+            }
+            proc.EnableRaisingEvents = true;
+            proc.Exited += (_, _) => RaiseStateChanged();
+
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(15));
+            await waitTask.WaitAsync(timeoutCts.Token);
+
+            var utf8 = new UTF8Encoding(false);
+            _pipe = server;
+            _workerProc = proc;
+            _reader = new StreamReader(server, utf8, detectEncodingFromByteOrderMarks: false, bufferSize: 4096, leaveOpen: true);
+            _writer = new StreamWriter(server, utf8, bufferSize: 4096, leaveOpen: true) { AutoFlush = true };
+            Log.Info($"elevated worker connected pid={proc.Id}");
+            RaiseStateChanged();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Info($"elevated worker start declined/failed: {ex.Message}");
+            try { server.Dispose(); } catch { }
             return false;
         }
-        catch { return false; }
     }
 
-    /// <summary>PID of the medium-integrity Explorer shell in this session.</summary>
-    private static uint ShellProcessId()
+    public static void ShutdownWorker()
     {
+        ResetWorkerCore();
+    }
+
+    private static void ResetWorkerCore()
+    {
+        bool hadWorker = _pipe != null || _workerProc != null;
+        try { _writer?.Dispose(); } catch { }
+        try { _reader?.Dispose(); } catch { }
+        try { _pipe?.Dispose(); } catch { }
         try
         {
-            IntPtr shell = GetShellWindow();
-            if (shell != IntPtr.Zero)
+            if (_workerProc is { HasExited: false })
+                _workerProc.Kill();
+        }
+        catch { }
+        try { _workerProc?.Dispose(); } catch { }
+        _writer = null;
+        _reader = null;
+        _pipe = null;
+        _workerProc = null;
+        if (hadWorker) RaiseStateChanged();
+    }
+
+    private static void RaiseStateChanged()
+    {
+        try { StateChanged?.Invoke(); } catch { }
+    }
+
+    /// <summary>Headless entry point for the elevated --worker process.</summary>
+    public static void RunWorker(string pipeName, int parentPid)
+    {
+        // Auto-terminate immediately if the UI parent exits.
+        _ = Task.Run(() =>
+        {
+            try
             {
-                GetWindowThreadProcessId(shell, out uint pid);
-                if (pid != 0) return pid;
+                using var parent = Process.GetProcessById(parentPid);
+                parent.WaitForExit();
+            }
+            catch { }
+            Environment.Exit(0);
+        });
+
+        HandleEnumerator.EnableDebugPrivilege();
+
+        try
+        {
+            using var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+            client.Connect(15000);
+            var utf8 = new UTF8Encoding(false);
+            using var reader = new StreamReader(client, utf8, detectEncodingFromByteOrderMarks: false, bufferSize: 4096, leaveOpen: true);
+            using var writer = new StreamWriter(client, utf8, bufferSize: 4096, leaveOpen: true) { AutoFlush = true };
+            var writeSync = new object();
+
+            while (reader.ReadLine() is { } line)
+            {
+                WorkerRequest? req;
+                try { req = JsonSerializer.Deserialize<WorkerRequest>(line); }
+                catch { continue; }
+                if (req == null) continue;
+
+                HandleEnumerator.QueryNameTimeoutMs = req.TimeoutMs;
+                if (!string.IsNullOrEmpty(req.Lang))
+                    L10n.SetLanguage(req.Lang);
+
+                var progress = new SyncProgress(text =>
+                {
+                    lock (writeSync)
+                    {
+                        writer.WriteLine(JsonSerializer.Serialize(
+                            new WorkerMessage("progress", text, null, null, null)));
+                    }
+                });
+
+                WorkerMessage reply;
+                try
+                {
+                    reply = req.Op switch
+                    {
+                        "drive" => new WorkerMessage(
+                            "result", null,
+                            HandleEnumerator.GetHoldersForDriveAsync(req.Target, progress, CancellationToken.None).GetAwaiter().GetResult(),
+                            null, null),
+                        "path" => new WorkerMessage(
+                            "result", null,
+                            HandleEnumerator.GetHoldersForPathAsync(req.Target, progress, CancellationToken.None).GetAwaiter().GetResult(),
+                            null, null),
+                        "eject" => new WorkerMessage(
+                            "result", null, null,
+                            EjectService.TryEjectAsync(req.Target, CancellationToken.None).GetAwaiter().GetResult(),
+                            null),
+                        _ => new WorkerMessage("result", null, null, null, $"Unknown op: {req.Op}")
+                    };
+                }
+                catch (Exception ex)
+                {
+                    reply = new WorkerMessage("result", null, null, null, ex.Message);
+                }
+
+                lock (writeSync)
+                {
+                    writer.WriteLine(JsonSerializer.Serialize(reply));
+                }
             }
         }
-        catch { }
-        try
+        catch (Exception ex)
         {
-            int session = Process.GetCurrentProcess().SessionId;
-            var explorer = Process.GetProcessesByName("explorer")
-                .FirstOrDefault(p => p.SessionId == session);
-            if (explorer != null) return (uint)explorer.Id;
+            Log.Info($"worker exit: {ex.Message}");
         }
-        catch { }
-        return 0;
     }
-
-    private const uint PROCESS_QUERY_INFORMATION = 0x0400;
-    private const uint TOKEN_DUPLICATE = 0x0002;
-    private const uint TOKEN_QUERY = 0x0008;
-    private const uint MAXIMUM_ALLOWED = 0x02000000;
-    private const uint NORMAL_PRIORITY_CLASS = 0x00000020;
-    private const uint CREATE_UNICODE_ENVIRONMENT = 0x00000400;
-
-    private enum SECURITY_IMPERSONATION_LEVEL
-    {
-        SecurityAnonymous = 0,
-        SecurityIdentification = 1,
-        SecurityImpersonation = 2,
-        SecurityDelegation = 3
-    }
-
-    private enum TOKEN_TYPE
-    {
-        TokenPrimary = 1,
-        TokenImpersonation = 2
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct PROCESS_INFORMATION
-    {
-        public IntPtr hProcess;
-        public IntPtr hThread;
-        public uint dwProcessId;
-        public uint dwThreadId;
-    }
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    private struct STARTUPINFO
-    {
-        public int cb;
-        public string? lpReserved;
-        public string? lpDesktop;
-        public string? lpTitle;
-        public int dwX, dwY, dwXSize, dwYSize, dwXCountChars, dwYCountChars, dwFillAttribute, dwFlags;
-        public short wShowWindow, cbReserved2;
-        public IntPtr lpReserved2;
-        public IntPtr hStdInput, hStdOutput, hStdError;
-    }
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr GetShellWindow();
-
-    [DllImport("user32.dll")]
-    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
-
-    [DllImport("kernel32.dll")]
-    private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
-
-    [DllImport("advapi32.dll")]
-    private static extern bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out IntPtr TokenHandle);
-
-    [DllImport("advapi32.dll")]
-    private static extern bool DuplicateTokenEx(IntPtr hExistingToken, uint dwDesiredAccess,
-        IntPtr lpTokenAttributes, SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-        TOKEN_TYPE TokenType, out IntPtr phNewToken);
-
-    [DllImport("userenv.dll")]
-    private static extern bool CreateEnvironmentBlock(out IntPtr lpEnvironment, IntPtr hToken, bool bInherit);
-
-    [DllImport("userenv.dll")]
-    private static extern bool DestroyEnvironmentBlock(IntPtr lpEnvironment);
-
-    [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
-    private static extern bool CreateProcessWithTokenW(IntPtr hToken, uint dwLogonFlags,
-        string? lpApplicationName, string lpCommandLine, uint dwCreationFlags,
-        IntPtr lpEnvironment, string? lpCurrentDirectory,
-        ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
-
-    [DllImport("kernel32.dll")]
-    private static extern bool CloseHandle(IntPtr hObject);
 }

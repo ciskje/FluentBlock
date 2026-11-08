@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<LockHolder> _fileHolders = new();
     private CancellationTokenSource? _cts;
     private AppSettings.Data _settings = AppSettings.Load();
+    private DispatcherTimer? _deviceChangeTimer;
 
     public MainWindow()
     {
@@ -27,7 +28,8 @@ public partial class MainWindow : Window
         // Elevated: OLE DnD is UIPI-blocked AND its registration shadows the
         // WM_DROPFILES fallback (Explorer picks OLE and never sends the
         // message), so revoke it and rely on WM_DROPFILES only.
-        // Non-elevated keeps rich OLE drag & drop (+ WM_DROPFILES + dedupe).
+        // Non-elevated (the default: UI stays as standard user and uses a
+        // background worker when elevation is needed) keeps rich OLE drag & drop.
         AllowDrop = !ThemeService.IsElevated();
         if (!string.IsNullOrEmpty(_settings.Lang) && string.IsNullOrEmpty(App.StartupLang))
             L10n.SetLanguage(_settings.Lang);
@@ -41,15 +43,25 @@ public partial class MainWindow : Window
             h.ProcessName.Contains(_holderFilter, StringComparison.OrdinalIgnoreCase) ||
             h.FilePath.Contains(_holderFilter, StringComparison.OrdinalIgnoreCase));
         FileHoldersGrid.ItemsSource = _fileHolders;
+        ElevationService.StateChanged += OnElevationStateChanged;
+        SizeChanged += (_, _) => UpdateDrivePanelLayout();
         Loaded += async (_, _) => { ApplyTexts(); RestoreColumns(); await RefreshDrivesAsync(); };
         Closing += (_, _) => SaveSettings();
+        Closed += (_, _) =>
+        {
+            ElevationService.StateChanged -= OnElevationStateChanged;
+            ElevationService.ShutdownWorker();
+        };
         var refreshCommand = new RoutedCommand();
-        CommandBindings.Add(new CommandBinding(refreshCommand, async (_, _) => await ScanSelectedDriveAsync()));
+        CommandBindings.Add(new CommandBinding(refreshCommand, (_, _) => OnRefreshClick(this, new RoutedEventArgs())));
         InputBindings.Add(new KeyBinding(refreshCommand, Key.F5, ModifierKeys.None));
         var focusFileCommand = new RoutedCommand();
         CommandBindings.Add(new CommandBinding(focusFileCommand, (_, _) => FilePathBox.Focus()));
         InputBindings.Add(new KeyBinding(focusFileCommand, Key.L, ModifierKeys.Control));
     }
+
+    private void OnElevationStateChanged()
+        => Dispatcher.InvokeAsync(UpdateElevationUI);
 
     private void ApplyTexts()
     {
@@ -91,9 +103,16 @@ public partial class MainWindow : Window
         ColHandle.Header = L10n.Get("ColHandle");
         ColAccess.Header = L10n.Get("ColAccess");
         ColFile.Header = L10n.Get("ColFile");
+        FileColProcess.Header = L10n.Get("ColProcess");
+        FileColPid.Header = L10n.Get("ColPid");
+        FileColUser.Header = L10n.Get("ColUser");
+        FileColHandle.Header = L10n.Get("ColHandle");
+        FileColFile.Header = L10n.Get("ColFile");
         FilterBox.ToolTip = L10n.Get("FilterHint");
         MiCopyPath.Header = L10n.Get("MenuCopyPath");
         MiOpenLocation.Header = L10n.Get("MenuOpenLocation");
+        MiFileCopyPath.Header = L10n.Get("MenuCopyPath");
+        MiFileOpenLocation.Header = L10n.Get("MenuOpenLocation");
         StatusText.Text = L10n.Get("StatusReady");
         UpdateElevationUI();
         try { VersionText.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?"; }
@@ -102,16 +121,23 @@ public partial class MainWindow : Window
             ProgressText.Text = L10n.Get("NoDrives");
     }
 
+    private void UpdateDrivePanelLayout()
+    {
+        bool showSideList = _drives.Count > 1 && ActualWidth >= 700;
+        DriveCol.Width = showSideList ? new GridLength(240) : new GridLength(0);
+        DriveGroup.Visibility = showSideList ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void PaintStatus(string brushKey)
     {
-        try { StatusDot.Fill = (System.Windows.Media.Brush)FindResource(brushKey); }
+        try { StatusDot.Fill = (Brush)FindResource(brushKey); }
         catch { /* keep current dot */ }
     }
 
     /// <summary>Rotates button icons on a UI timer until <see cref="StopSpinners"/>.</summary>
     private DispatcherTimer? _spinTimer;
 
-    private void StartSpinners(params System.Windows.Media.RotateTransform[] targets)
+    private void StartSpinners(params RotateTransform[] targets)
     {
         StopSpinners();
         _spinTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(60), DispatcherPriority.Render,
@@ -119,7 +145,7 @@ public partial class MainWindow : Window
         _spinTimer.Start();
     }
 
-    private void StopSpinners(params System.Windows.Media.RotateTransform[] targets)
+    private void StopSpinners(params RotateTransform[] targets)
     {
         _spinTimer?.Stop();
         _spinTimer = null;
@@ -134,9 +160,6 @@ public partial class MainWindow : Window
             src.AddHook(WndProc);
             try
             {
-                // Classic file drops cross the UIPI boundary (OLE DnD does
-                // not), but only with all three file-drop messages allowed:
-                // WM_DROPFILES alone is not sufficient.
                 DragAcceptFiles(src.Handle, true);
                 bool dropOk = ChangeWindowMessageFilterEx(src.Handle, WM_DROPFILES, MSGFLT_ALLOW, IntPtr.Zero);
                 bool copyDataOk = ChangeWindowMessageFilterEx(src.Handle, WM_COPYDATA, MSGFLT_ALLOW, IntPtr.Zero);
@@ -147,15 +170,12 @@ public partial class MainWindow : Window
         }
     }
 
-    private bool _autoRefreshing;
-
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         const int WM_DEVICECHANGE = 0x0219;
-        if (msg == WM_DEVICECHANGE && !_autoRefreshing)
+        if (msg == WM_DEVICECHANGE)
         {
-            _autoRefreshing = true;
-            _ = AutoRefreshAsync();
+            ScheduleDeviceRefresh();
         }
         else if (msg == WM_DROPFILES)
         {
@@ -166,25 +186,43 @@ public partial class MainWindow : Window
         return IntPtr.Zero;
     }
 
-    private async Task AutoRefreshAsync()
+    private void ScheduleDeviceRefresh()
     {
-        try { await RefreshDrivesAsync(); }
-        finally { _autoRefreshing = false; }
+        if (_deviceChangeTimer == null)
+        {
+            _deviceChangeTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(350), DispatcherPriority.Background,
+                async (_, _) =>
+                {
+                    _deviceChangeTimer?.Stop();
+                    await RefreshDrivesAsync(onlyIfChanged: true);
+                }, Dispatcher);
+        }
+        _deviceChangeTimer.Stop();
+        _deviceChangeTimer.Start();
     }
 
     private string _holderFilter = "";
 
-    private void OnFilterChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    private void OnFilterChanged(object sender, TextChangedEventArgs e)
     {
         _holderFilter = FilterBox.Text.Trim();
         System.Windows.Data.CollectionViewSource.GetDefaultView(_holders).Refresh();
     }
 
-    private LockHolder? SelectedHolder() => HoldersGrid.SelectedItem as LockHolder;
+    private LockHolder? SelectedHolder(object? sender)
+    {
+        if (sender is MenuItem { Parent: ContextMenu { PlacementTarget: DataGrid dg } }
+            && dg.SelectedItem is LockHolder fromMenu)
+            return fromMenu;
+        return (HoldersGrid.IsKeyboardFocusWithin ? HoldersGrid.SelectedItem : null) as LockHolder
+            ?? (FileHoldersGrid.IsKeyboardFocusWithin ? FileHoldersGrid.SelectedItem : null) as LockHolder
+            ?? HoldersGrid.SelectedItem as LockHolder
+            ?? FileHoldersGrid.SelectedItem as LockHolder;
+    }
 
     private void OnCopyPathClick(object sender, RoutedEventArgs e)
     {
-        if (SelectedHolder() is { } h)
+        if (SelectedHolder(sender) is { } h)
         {
             try { Clipboard.SetText(h.FilePath); }
             catch { }
@@ -193,7 +231,7 @@ public partial class MainWindow : Window
 
     private void OnOpenLocationClick(object sender, RoutedEventArgs e)
     {
-        if (SelectedHolder() is { } h)
+        if (SelectedHolder(sender) is { } h)
         {
             try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{h.FilePath}\""); }
             catch (Exception ex) { ProgressText.Text = ex.Message; }
@@ -233,27 +271,50 @@ public partial class MainWindow : Window
         catch { }
     }
 
-    private async Task RefreshDrivesAsync()
+    private async Task RefreshDrivesAsync(bool onlyIfChanged = false)
     {
+        var fresh = await Task.Run(DriveEnumerator.GetRemovableDrives);
+        if (onlyIfChanged && _drives.SequenceEqual(fresh))
+            return;
+
+        string? prevLetter = SelectedLetter();
         _drives.Clear();
-        foreach (var d in await Task.Run(DriveEnumerator.GetRemovableDrives))
+        foreach (var d in fresh)
             _drives.Add(d);
+        UpdateDrivePanelLayout();
+
         if (_drives.Count == 0)
         {
+            _holders.Clear();
             ProgressText.Text = L10n.Get("NoDrives");
+            PaintStatus("SuccessBrush");
             EjectBtn.IsEnabled = false;
             MiEject.IsEnabled = false;
             return;
         }
         EjectBtn.IsEnabled = true;
         MiEject.IsEnabled = true;
+
+        int targetIndex = 0;
+        if (prevLetter != null)
+        {
+            for (int i = 0; i < _drives.Count; i++)
+            {
+                if (_drives[i].Letter.Equals(prevLetter, StringComparison.OrdinalIgnoreCase))
+                {
+                    targetIndex = i;
+                    break;
+                }
+            }
+        }
+
         // Set both selections without firing scans, then scan once.
         DriveList.SelectionChanged -= OnDriveSelectionChanged;
         DriveBox.SelectionChanged -= OnDriveSelectionChanged;
         try
         {
-            DriveList.SelectedIndex = 0;
-            DriveBox.SelectedIndex = 0;
+            DriveList.SelectedIndex = targetIndex;
+            DriveBox.SelectedIndex = targetIndex;
         }
         finally
         {
@@ -265,24 +326,41 @@ public partial class MainWindow : Window
 
     private string? SelectedLetter()
     {
-        if (DriveList.SelectedItem is RemovableDrive d) return d.Letter;
         if (DriveBox.SelectedItem is RemovableDrive b) return b.Letter;
+        if (DriveList.SelectedItem is RemovableDrive d) return d.Letter;
         return _drives.FirstOrDefault()?.Letter;
     }
 
-    private async void OnRefreshClick(object sender, RoutedEventArgs e) => await ScanSelectedDriveAsync();
+    private async void OnRefreshClick(object sender, RoutedEventArgs e)
+    {
+        // When the user explicitly clicks Refresh on an apparently empty drive
+        // while not yet elevated, automatically elevate the worker to inspect
+        // system/service processes too.
+        bool autoElevate = !ElevationService.IsElevatedOrWorkerActive && _holders.Count == 0;
+        await ScanSelectedDriveAsync(forceElevated: autoElevate);
+    }
 
-    private async void OnDriveSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private async void OnDriveSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         // Keep the two selectors in sync without reentrancy.
-        if (sender == DriveList && DriveList.SelectedItem is RemovableDrive d)
-            DriveBox.SelectedItem = d;
-        else if (sender == DriveBox && DriveBox.SelectedItem is RemovableDrive b)
-            DriveList.SelectedItem = b;
+        DriveList.SelectionChanged -= OnDriveSelectionChanged;
+        DriveBox.SelectionChanged -= OnDriveSelectionChanged;
+        try
+        {
+            if (sender == DriveList && DriveList.SelectedItem is RemovableDrive d)
+                DriveBox.SelectedItem = d;
+            else if (sender == DriveBox && DriveBox.SelectedItem is RemovableDrive b)
+                DriveList.SelectedItem = b;
+        }
+        finally
+        {
+            DriveList.SelectionChanged += OnDriveSelectionChanged;
+            DriveBox.SelectionChanged += OnDriveSelectionChanged;
+        }
         await ScanSelectedDriveAsync();
     }
 
-    private async Task ScanSelectedDriveAsync()
+    private async Task ScanSelectedDriveAsync(bool forceElevated = false)
     {
         var letter = SelectedLetter();
         if (letter == null) return;
@@ -296,21 +374,39 @@ public partial class MainWindow : Window
         StartSpinners(RefreshSpin);
         RefreshBtn.IsEnabled = false;
         _holders.Clear();
-        Log.Info($"scan start drive={letter}");
+        Log.Info($"scan start drive={letter} forceElevated={forceElevated}");
         try
         {
-            var holders = await HandleEnumerator.GetHoldersForDriveAsync(letter, progress, ct);
+            List<LockHolder> holders;
+            if (forceElevated || ElevationService.IsElevatedOrWorkerActive)
+            {
+                holders = await ElevationService.TryScanDriveElevatedAsync(letter, progress, ct)
+                    ?? await HandleEnumerator.GetHoldersForDriveAsync(letter, progress, ct);
+            }
+            else
+            {
+                holders = await HandleEnumerator.GetHoldersForDriveAsync(letter, progress, ct);
+            }
             foreach (var h in holders) _holders.Add(h);
-            ProgressText.Text = holders.Count == 0 ? L10n.Get("NoLocks") : string.Format(L10n.Get("LocksFound"), holders.Count);
-            Log.Info($"scan done drive={letter} holders={holders.Count}");
+            ProgressText.Text = holders.Count == 0
+                ? L10n.Get("NoLocks")
+                : string.Format(L10n.Get("LocksFound"), holders.Count);
+            PaintStatus(holders.Count == 0 ? "SuccessBrush" : "WarningBrush");
+            Log.Info($"scan done drive={letter} holders={holders.Count} elevated={ElevationService.IsElevatedOrWorkerActive}");
         }
         catch (OperationCanceledException) { Log.Info($"scan cancelled drive={letter}"); }
-        catch (Exception ex) { ProgressText.Text = ex.Message; PaintStatus("ErrorBrush"); Log.Info($"scan fail drive={letter}: {ex.Message}"); }
+        catch (Exception ex)
+        {
+            ProgressText.Text = ex.Message;
+            PaintStatus("ErrorBrush");
+            Log.Info($"scan fail drive={letter}: {ex.Message}");
+        }
         finally
         {
             StopSpinners(RefreshSpin);
             StatusText.Text = L10n.Get("StatusReady");
             RefreshBtn.IsEnabled = true;
+            UpdateElevationUI();
         }
     }
 
@@ -330,9 +426,6 @@ public partial class MainWindow : Window
         }
     }
 
-    // Non-elevated drops arrive twice (OLE DnD + WM_DROPFILES); elevated
-    // only via WM_DROPFILES. Whoever arrives second with the same files
-    // inside a short window is a duplicate.
     private (string Key, DateTime When) _lastDrop;
 
     private bool NoteDrop(IEnumerable<string> paths)
@@ -365,7 +458,6 @@ public partial class MainWindow : Window
             }
         }
         finally { DragFinish(hDrop); }
-        // Only paths are read from the drop: nothing is ever executed.
         Log.Info($"drop files={paths.Count} first={(paths.Count > 0 ? paths[0] : "-")}");
         if (paths.Count > 0 && NoteDrop(paths))
         {
@@ -386,6 +478,15 @@ public partial class MainWindow : Window
     [DllImport("user32.dll")]
     private static extern bool ChangeWindowMessageFilterEx(IntPtr hWnd, uint message, uint action, IntPtr pChangeFilterStruct);
 
+    private void OnFilePathKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            OnCheckFileClick(sender, new RoutedEventArgs());
+        }
+    }
+
     private async void OnCheckFileClick(object sender, RoutedEventArgs e)
     {
         string path = FilePathBox.Text.Trim().Trim('"');
@@ -400,10 +501,13 @@ public partial class MainWindow : Window
         CheckFileBtn.IsEnabled = false;
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
             var holders = await FileLockChecker.WhoLocksAsync(path, progress, cts.Token);
             foreach (var h in holders) _fileHolders.Add(h);
-            ProgressText.Text = holders.Count == 0 ? L10n.Get("NoLocks") : string.Format(L10n.Get("LocksFound"), holders.Count);
+            ProgressText.Text = holders.Count == 0
+                ? L10n.Get("NoLocks")
+                : string.Format(L10n.Get("LocksFound"), holders.Count);
+            PaintStatus(holders.Count == 0 ? "SuccessBrush" : "WarningBrush");
         }
         catch (Exception ex) { ProgressText.Text = ex.Message; PaintStatus("ErrorBrush"); }
         finally
@@ -413,6 +517,7 @@ public partial class MainWindow : Window
             CheckFileIcon.Visibility = Visibility.Visible;
             StatusText.Text = L10n.Get("StatusReady");
             CheckFileBtn.IsEnabled = true;
+            UpdateElevationUI();
         }
     }
 
@@ -434,13 +539,14 @@ public partial class MainWindow : Window
         }
         catch { }
         if (dlg.ShowDialog(this) == true)
+        {
             FilePathBox.Text = dlg.FileName;
+            OnCheckFileClick(sender, e);
+        }
     }
 
     private void OnPasteClick(object sender, RoutedEventArgs e)
     {
-        // Clipboard reads work across integrity levels (paste-up is allowed),
-        // so this covers copied files AND copied paths, elevated or not.
         try
         {
             if (Clipboard.ContainsFileDropList())
@@ -484,7 +590,26 @@ public partial class MainWindow : Window
         PaintStatus("WarningBrush");
         try
         {
-            var result = await EjectService.TryEjectAsync(letter, cts.Token);
+            bool wasElevated = ElevationService.IsElevatedOrWorkerActive;
+            var result = wasElevated
+                ? (await ElevationService.TryEjectElevatedAsync(letter, cts.Token)
+                   ?? await EjectService.TryEjectAsync(letter, cts.Token))
+                : await EjectService.TryEjectAsync(letter, cts.Token);
+
+            // Automatic elevation when user-level eject fails/vetoes:
+            if (!result.Ejected && !wasElevated)
+            {
+                if (result.VetoType is "InsufficientRights" or null)
+                {
+                    var elevatedResult = await ElevationService.TryEjectElevatedAsync(letter, cts.Token);
+                    if (elevatedResult != null) result = elevatedResult;
+                }
+                if (!result.Ejected && _holders.Count == 0)
+                {
+                    await ScanSelectedDriveAsync(forceElevated: true);
+                }
+            }
+
             if (result.Ejected)
             {
                 ProgressText.Text = L10n.Get("EjectOk");
@@ -510,27 +635,30 @@ public partial class MainWindow : Window
             new EjectErrorDialog(L10n.Get("EjectDialogTitle"), cause, remedy) { Owner = this }.ShowDialog();
         }
         catch (Exception ex) { ProgressText.Text = ex.Message; PaintStatus("ErrorBrush"); }
-        finally { StatusText.Text = L10n.Get("StatusReady"); }
+        finally
+        {
+            StatusText.Text = L10n.Get("StatusReady");
+            UpdateElevationUI();
+        }
     }
 
     private void OnExitClick(object sender, RoutedEventArgs e) => Close();
 
     private void UpdateElevationUI()
     {
-        bool admin = ThemeService.IsElevated();
+        bool admin = ElevationService.IsElevatedOrWorkerActive;
         AdminText.Text = admin ? L10n.Get("Elevated") : L10n.Get("NotElevated");
-        string switchText = admin ? L10n.Get("SwitchToUser") : L10n.Get("SwitchToAdmin");
-        RoleBtnText.Text = switchText;
-        RoleBtn.ToolTip = switchText;
-        MiSwitchRole.Header = switchText;
+        AdminStatusItem.Cursor = admin ? Cursors.Arrow : Cursors.Hand;
     }
 
-    private void OnSwitchRoleClick(object sender, RoutedEventArgs e)
+    private async void OnAdminStatusClick(object sender, MouseButtonEventArgs e)
     {
-        bool ok = ThemeService.IsElevated()
-            ? ElevationService.RestartAsUser()
-            : ElevationService.RestartAsAdmin();
-        if (!ok) ProgressText.Text = L10n.Get("RoleSwitchCancelled");
+        if (ElevationService.IsElevatedOrWorkerActive) return;
+        if (await ElevationService.EnsureWorkerAsync())
+        {
+            UpdateElevationUI();
+            await ScanSelectedDriveAsync(forceElevated: true);
+        }
     }
 
     private void OnThemeClick(object sender, RoutedEventArgs e)
@@ -538,7 +666,6 @@ public partial class MainWindow : Window
         MiThemeSystem.IsChecked = sender == MiThemeSystem;
         MiThemeLight.IsChecked = sender == MiThemeLight;
         MiThemeDark.IsChecked = sender == MiThemeDark;
-        // v0.2: follows system; explicit light/dark via TODO 0.2 (resource dictionaries).
         _settings = _settings with
         {
             Theme = sender == MiThemeLight ? "light" : sender == MiThemeDark ? "dark" : "system"
@@ -548,7 +675,7 @@ public partial class MainWindow : Window
 
     private async void OnLanguageClick(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.MenuItem mi && mi.Tag is string lang)
+        if (sender is MenuItem mi && mi.Tag is string lang)
         {
             L10n.SetLanguage(lang);
             _settings = _settings with { Lang = lang };
@@ -560,7 +687,6 @@ public partial class MainWindow : Window
 
     private static string VetoDisplayName(string veto)
     {
-        // Localizes known PNP veto types; unknown ones keep the raw enum name.
         string key = "Veto" + veto;
         string s = L10n.Get(key);
         return s == key ? veto : s;
@@ -570,7 +696,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            if (!System.IO.File.Exists(Log.FilePath))
+            if (!File.Exists(Log.FilePath))
                 Log.Info("FluentSblock log started");
             System.Diagnostics.Process.Start("notepad.exe", Log.FilePath);
         }
@@ -584,17 +710,18 @@ public partial class MainWindow : Window
     private void ExportHolders(string sep, bool tsv)
     {
         if (_holders.Count == 0) { ProgressText.Text = L10n.Get("NoLocks"); return; }
-        var dlg = new OpenFileDialog();
-        // Save dialog via OpenFileDialog with CheckFileExists=false (no extra dependency).
-        dlg.CheckFileExists = false;
-        dlg.CheckPathExists = true;
-        dlg.ValidateNames = true;
-        dlg.Filter = tsv ? "TSV (*.tsv)|*.tsv" : "CSV (*.csv)|*.csv";
-        dlg.FileName = tsv ? "holders.tsv" : "holders.csv";
+        var dlg = new SaveFileDialog
+        {
+            OverwritePrompt = true,
+            CheckPathExists = true,
+            ValidateNames = true,
+            Filter = tsv ? "TSV (*.tsv)|*.tsv" : "CSV (*.csv)|*.csv",
+            FileName = tsv ? "holders.tsv" : "holders.csv"
+        };
         if (dlg.ShowDialog(this) != true) return;
         try
         {
-            var sb = new System.Text.StringBuilder();
+            var sb = new StringBuilder();
             sb.AppendLine(string.Join(sep, "Process", "PID", "User", "Handle", "Type", "Access", "File"));
             foreach (var h in _holders)
             {
@@ -602,7 +729,7 @@ public partial class MainWindow : Window
                 sb.AppendLine(string.Join(sep, Cell(h.ProcessName), h.Pid.ToString(), Cell(h.User),
                     h.HandleHex, "File", h.Access, Cell(h.FilePath)));
             }
-            System.IO.File.WriteAllText(dlg.FileName, sb.ToString(), System.Text.Encoding.UTF8);
+            File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
             ProgressText.Text = dlg.FileName;
             Log.Info($"exported {_holders.Count} holders to {dlg.FileName}");
         }
@@ -621,7 +748,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            using var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunKeyPath);
+            using var k = Registry.CurrentUser.OpenSubKey(RunKeyPath);
             return k?.GetValue("FluentSblock") != null;
         }
         catch { return false; }
@@ -631,7 +758,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            using var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
+            using var k = Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
             if (k == null) return;
             if (on)
                 k.SetValue("FluentSblock", "\"" + Environment.ProcessPath + "\"");
@@ -643,13 +770,13 @@ public partial class MainWindow : Window
 
     private void RefreshTimeoutChecks()
     {
-        foreach (var item in MiTimeout.Items.OfType<System.Windows.Controls.MenuItem>())
+        foreach (var item in MiTimeout.Items.OfType<MenuItem>())
             item.IsChecked = item.Tag is string s && s == _settings.TimeoutMs.ToString();
     }
 
     private void OnTimeoutClick(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.MenuItem mi && mi.Tag is string s && int.TryParse(s, out int ms))
+        if (sender is MenuItem mi && mi.Tag is string s && int.TryParse(s, out int ms))
         {
             HandleEnumerator.QueryNameTimeoutMs = ms;
             _settings = _settings with { TimeoutMs = HandleEnumerator.QueryNameTimeoutMs };

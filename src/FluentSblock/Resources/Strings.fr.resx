@@ -32,9 +32,9 @@
   <data name="Browse" xml:space="preserve"><value>Parcourir…</value></data>
   <data name="StatusReady" xml:space="preserve"><value>Prêt</value></data>
   <data name="StatusScanning" xml:space="preserve"><value>Analyse…</value></data>
-  <data name="NotElevated" xml:space="preserve"><value>Non élevé — exécutez en administrateur pour des résultats complets</value></data>
+  <data name="NotElevated" xml:space="preserve"><value>Utilisateur standard — élévation automatique si nécessaire (cliquer pour analyse complète)</value></data>
   <data name="Elevated" xml:space="preserve"><value>Élevé</value></data>
-  <data name="AboutText" xml:space="preserve"><value>FluentSblock 0.2.17 — liste les processus avec fichiers ouverts sur lecteurs amovibles.</value></data>
+  <data name="AboutText" xml:space="preserve"><value>FluentSblock 0.2.18 — liste les processus avec fichiers ouverts sur lecteurs amovibles.</value></data>
   <data name="ScanProgress" xml:space="preserve"><value>Analyse des handles {0}/{1}…</value></data>
   <data name="ScanFailedHandles" xml:space="preserve"><value>Impossible de lire les handles système (erreur 0x{0:X8}). Essayez en administrateur.</value></data>
   <data name="LocksFound" xml:space="preserve"><value>{0} handles ouverts</value></data>
@@ -71,9 +71,6 @@
   <data name="EjectConfirmTitle" xml:space="preserve"><value>Éjecter le périphérique ?</value></data>
   <data name="EjectConfirmText" xml:space="preserve"><value>{0} handles ouverts sur ce lecteur. Éjecter quand même ?</value></data>
   <data name="BrowseTitle" xml:space="preserve"><value>Sélectionner un fichier ou un dossier</value></data>
-  <data name="SwitchToAdmin" xml:space="preserve"><value>Passer en admin</value></data>
-  <data name="SwitchToUser" xml:space="preserve"><value>Passer en utilisateur</value></data>
-  <data name="RoleSwitchCancelled" xml:space="preserve"><value>Changement de rôle annulé.</value></data>
   <data name="Paste" xml:space="preserve"><value>Coller</value></data>
   <data name="PasteHint" xml:space="preserve"><value>Coller un fichier copié ou un chemin</value></data>
   <data name="ClipboardEmpty" xml:space="preserve"><value>Le presse-papiers ne contient ni fichier ni chemin.</value></data>

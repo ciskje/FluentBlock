@@ -11,6 +11,15 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Headless elevated worker mode: "--worker <pipeName> <parentPid>"
+        if (e.Args.Length >= 3 && e.Args[0].Equals("--worker", StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(e.Args[2], out int parentPid))
+        {
+            FluentSblock.Services.ElevationService.RunWorker(e.Args[1], parentPid);
+            Environment.Exit(0);
+            return;
+        }
+
         // --lang=fr override for testing EFIGS.
         foreach (var arg in e.Args)
         {
@@ -22,8 +31,8 @@ public partial class App : Application
             }
         }
 
-        // Starts as standard user by design (no UAC at launch): elevation
-        // is on demand via the Admin/User switch button.
+        // Starts as standard user by design (no UAC at launch): an elevated
+        // background worker is spawned automatically on demand when needed.
 
         try { SetCurrentProcessExplicitAppUserModelId("FluentSblock"); }
         catch { /* taskbar grouping best effort */ }

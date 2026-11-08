@@ -29,9 +29,10 @@ Get the latest release from the
 
 Unsigned builds: on first run SmartScreen shows a blue screen → "More info" → "Run anyway".
 
-> Tip: the app starts as standard user (no UAC prompt). It sees your processes;
-> for system-wide results — System, other users, elevated processes — use the
-> Admin/User button in the toolbar to restart elevated, then switch back.
+> Tip: the app runs its UI as standard user (no UAC prompt at launch, Explorer
+> drag & drop always works). When a check or ejection needs system-wide
+> visibility, it automatically spawns a headless elevated background worker
+> (`--worker`) for the session without restarting the window.
 
 > Note: there is no `dist/` folder in git (build outputs are gitignored) —
 > every file above comes from the release assets.

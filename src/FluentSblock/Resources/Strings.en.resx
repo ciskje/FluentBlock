@@ -32,9 +32,9 @@
   <data name="Browse" xml:space="preserve"><value>Browse…</value></data>
   <data name="StatusReady" xml:space="preserve"><value>Ready</value></data>
   <data name="StatusScanning" xml:space="preserve"><value>Scanning…</value></data>
-  <data name="NotElevated" xml:space="preserve"><value>Not elevated — run as administrator for full results</value></data>
+  <data name="NotElevated" xml:space="preserve"><value>Standard user — elevates automatically when needed (click for full scan)</value></data>
   <data name="Elevated" xml:space="preserve"><value>Elevated</value></data>
-  <data name="AboutText" xml:space="preserve"><value>FluentSblock 0.2.17 — lists processes with open files on removable drives.</value></data>
+  <data name="AboutText" xml:space="preserve"><value>FluentSblock 0.2.18 — lists processes with open files on removable drives.</value></data>
   <data name="ScanProgress" xml:space="preserve"><value>Scanning handles {0}/{1}…</value></data>
   <data name="ScanFailedHandles" xml:space="preserve"><value>Cannot read system handles (error 0x{0:X8}). Try running as administrator.</value></data>
   <data name="LocksFound" xml:space="preserve"><value>{0} open handles</value></data>
@@ -71,9 +71,6 @@
   <data name="EjectConfirmTitle" xml:space="preserve"><value>Eject device?</value></data>
   <data name="EjectConfirmText" xml:space="preserve"><value>{0} open handles on this drive. Eject anyway?</value></data>
   <data name="BrowseTitle" xml:space="preserve"><value>Select a file or folder</value></data>
-  <data name="SwitchToAdmin" xml:space="preserve"><value>Switch to Admin</value></data>
-  <data name="SwitchToUser" xml:space="preserve"><value>Switch to User</value></data>
-  <data name="RoleSwitchCancelled" xml:space="preserve"><value>Role switch cancelled.</value></data>
   <data name="Paste" xml:space="preserve"><value>Paste</value></data>
   <data name="PasteHint" xml:space="preserve"><value>Paste a copied file or path</value></data>
   <data name="ClipboardEmpty" xml:space="preserve"><value>Clipboard has no file or path.</value></data>

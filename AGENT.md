@@ -5,7 +5,7 @@ Specs for coding agents. Source of truth for purpose, architecture, UI, versioni
 ## 1. Identity
 
 - Name: `FluentSblock` (working title: "who holds files open?")
-- Current version: `0.2.17` — see `VERSION` (single-line `X.Y.Z`).
+- Current version: `0.2.18` — see `VERSION` (single-line `X.Y.Z`).
 - Repo/dir: `Z:\Lavorazioni\2026\AI\FluentSblock`.
 - Stack v0.1: **C# .NET 8 WPF** (no WinUI3 packaging) with manual Fluent 2 styling.
   Reason: builds with only SDK 8.0.425 installed, no extra workloads, single testable exe.
@@ -38,13 +38,13 @@ Read-only + safe ejection via system APIs (with confirmation when holders>0).
 ## 4. Main window layout (`MainWindow.xaml`)
 
 ```
-MenuBar: File | View | ?/Help  (File>Refresh,Eject,Admin/User switch,Export CSV/TSV,Exit; View>Theme,Language,Autostart; Help>Show log,About)
-Toolbar: [Drive ComboBox] [Refresh F5] [Eject] [Admin/User switch]
+MenuBar: File | View | ?/Help  (File>Refresh,Eject,Export CSV/TSV,Exit; View>Theme,Language,Autostart,Timeout; Help>Show log,About)
+Toolbar: [Drive ComboBox] [Refresh F5] [Eject]
 Split:
-  Left: ListView of removable drives (letter, label) — empty state: "No removable drives"
+  Left: ListView of removable drives (letter, label; auto-collapses when <= 1 drive or < 700px) — empty state: "No removable drives"
   Right: DataGrid of lock holders (Process, PID, User, Handle, Access, File, sortable, filter box, row menu) — empty state: "No locks"
-Bottom card: "Check file" — path TextBox (typable, drag&drop from Explorer as User, elevated best-effort via WM_DROPFILES) + [Browse...] + [Paste: copied file/path, always works] + [Who is locking it?] + results; draggable splitter with results area
-StatusBar: scan state, Elevated/Not-elevated + version
+Bottom card: "Check file" — path TextBox (typable, Enter to check, drag&drop from Explorer always works) + [Browse...] + [Paste: copied file/path] + [Who is locking it?] + results (Process, PID, User, Handle, File + row menu); draggable splitter with results area
+StatusBar: scan state, Standard user / Elevated (clickable to pre-start worker) + version
 ```
 
 Responsive: min 800x500, 2-column `NavigationView`-like layout collapsing to 1 under 700px. All texts from `.resx`, never hardcoded.
@@ -63,8 +63,8 @@ installer/                      # FluentSblock.iss (Program Files Inno, versione
 AGENT.md                        # this file
 TODO.md                         # activity tracking
 src/FluentSblock/
-  FluentSblock.csproj           # net8.0-windows, UseWPF, x64, Version 0.2.17
-  app.manifest                  # asInvoker: starts as User, Admin on demand via the switch button
+  FluentSblock.csproj           # net8.0-windows, UseWPF, x64, Version 0.2.18
+  app.manifest                  # asInvoker: UI stays as User, headless elevated --worker spawned on demand
 src/FluentSblock.Tests/
   FluentSblock.Tests.csproj     # xUnit golden: locked fixture vs handle64 -v
   App.xaml[.cs]                 # theme, language, DWM Mica
@@ -81,7 +81,7 @@ src/FluentSblock.Tests/
     Log.cs                      # append-only diagnostic log in %TEMP%
     AppSettings.cs              # theme/language/columns in %APPDATA% (JSON, never throws)
     EjectService.cs             # CM_Request_Device_EjectW bottom-up + localized veto + PreviewEjectTarget
-    ElevationService.cs         # restart as Admin (runas UAC) or as User (Explorer token, runas fallback), args preserved
+    ElevationService.cs         # on-demand headless elevated worker (--worker) over Named Pipe
   Themes/FluentTokens.xaml      # corner radius, brushes, TextStyles, vector icons
   icon.ico                      # blue padlock, transparent bg, 16/32/48/256
   Resources/Strings.{en,fr,it,de,es}.resx  # EFIGS, same keys

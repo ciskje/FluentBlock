@@ -1,7 +1,7 @@
 # FluentSblock — TODO.md
 
 Activity tracking. Check only what is verified with a green build.
-Current version: `0.2.17` (see `VERSION`).
+Current version: `0.2.18` (see `VERSION`).
 
 ## Version legend
 
@@ -121,6 +121,13 @@ Goal: faster, robust scan following the real handle64.exe flow
 - [ ] Manual test: plug E:, implicit preview check, real eject (confirmation with holders, veto with open file)
 - [ ] Manual test: CSV/TSV export, Help>log, USB insertion → auto-refresh
 - [ ] Tag `v0.2.0`
+
+## 0.2.18 — automatic on-demand elevated worker & UX polish
+
+- [x] Automatic headless elevated worker (`FluentSblock.exe --worker <pipe> <parentPid>`) over Named Pipe: UI always stays at standard-user integrity (no window restart, Explorer OLE drag &amp; drop always works), manual Admin/User switch button removed
+- [x] Automatic elevation triggers: file check when user-level scan finds 0 locks, eject when vetoed/insufficient rights, manual Refresh (`F5`) on an empty drive, or click on the status bar indicator
+- [x] UX &amp; logic fixes: deduplicate handles by `(Pid, FilePath)` instead of `FilePath` alone; status dot returns to green (`SuccessBrush`) when 0 locks found; `Enter` key in `FilePathBox` and `Browse…` auto-start file check; `FileHoldersGrid` localized with `User`/`Handle` columns + context menu + RM user resolution; `WM_DEVICECHANGE` debounced (350 ms) preserving selected drive; `SaveFileDialog` for CSV/TSV export; side drive list auto-collapses when &lt;= 1 drive
+- [x] `AboutText` 0.2.18; `VERSION`+csproj `0.2.18`; green build + green tests
 
 ## 0.2.17 — start as standard user
 

@@ -61,12 +61,31 @@ public static class FileLockChecker
         if (completed == rmTask && rmTask.Result.Count > 0) return rmTask.Result;
         ct.ThrowIfCancellationRequested();
         progress?.Report(L10n.Get("RmFallback"));
-        return await HandleEnumerator.GetHoldersForPathAsync(path, progress, ct);
+
+        if (ElevationService.IsElevatedOrWorkerActive)
+        {
+            var elevated = await ElevationService.TryScanPathElevatedAsync(path, progress, ct);
+            if (elevated != null) return elevated;
+        }
+
+        var userHolders = await HandleEnumerator.GetHoldersForPathAsync(path, progress, ct);
+        if (userHolders.Count > 0)
+            return userHolders;
+
+        // Nothing found at user integrity: if the target file/folder exists,
+        // automatically query the elevated background worker to inspect system/admin processes.
+        if (File.Exists(path) || Directory.Exists(path))
+        {
+            var elevated = await ElevationService.TryScanPathElevatedAsync(path, progress, ct);
+            if (elevated != null) return elevated;
+        }
+        return userHolders;
     }
 
     private static List<LockHolder> TryRestartManager(string path)
     {
         var result = new List<LockHolder>();
+        if (Directory.Exists(path)) return result; // RM only registers files, not directories
         uint session = 0;
         try
         {
@@ -90,10 +109,8 @@ public static class FileLockChecker
                     for (int i = 0; i < count; i++)
                     {
                         uint pid = arr[i].Process.dwProcessId;
-                        string name;
-                        try { name = Process.GetProcessById((int)pid).ProcessName + ".exe"; }
-                        catch { name = arr[i].strAppName; }
-                        result.Add(new LockHolder(name, (int)pid, "", "", full, ""));
+                        var (name, user) = HandleEnumerator.ResolveProcessIdentity(pid, arr[i].strAppName);
+                        result.Add(new LockHolder(name, (int)pid, user, "", full, ""));
                     }
                 }
             }

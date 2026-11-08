@@ -32,9 +32,9 @@
   <data name="Browse" xml:space="preserve"><value>Sfoglia…</value></data>
   <data name="StatusReady" xml:space="preserve"><value>Pronto</value></data>
   <data name="StatusScanning" xml:space="preserve"><value>Scansione…</value></data>
-  <data name="NotElevated" xml:space="preserve"><value>Non elevato — esegui come amministratore per risultati completi</value></data>
+  <data name="NotElevated" xml:space="preserve"><value>Utente standard — elevazione automatica se serve (clicca per scansione completa)</value></data>
   <data name="Elevated" xml:space="preserve"><value>Elevato</value></data>
-  <data name="AboutText" xml:space="preserve"><value>FluentSblock 0.2.17 — elenca i processi con file aperti sui dischi rimovibili.</value></data>
+  <data name="AboutText" xml:space="preserve"><value>FluentSblock 0.2.18 — elenca i processi con file aperti sui dischi rimovibili.</value></data>
   <data name="ScanProgress" xml:space="preserve"><value>Scansione handle {0}/{1}…</value></data>
   <data name="ScanFailedHandles" xml:space="preserve"><value>Impossibile leggere gli handle di sistema (errore 0x{0:X8}). Prova come amministratore.</value></data>
   <data name="LocksFound" xml:space="preserve"><value>{0} handle aperti</value></data>
@@ -71,9 +71,6 @@
   <data name="EjectConfirmTitle" xml:space="preserve"><value>Espellere il dispositivo?</value></data>
   <data name="EjectConfirmText" xml:space="preserve"><value>{0} handle aperti su questo drive. Espellere comunque?</value></data>
   <data name="BrowseTitle" xml:space="preserve"><value>Seleziona un file o una cartella</value></data>
-  <data name="SwitchToAdmin" xml:space="preserve"><value>Passa a Admin</value></data>
-  <data name="SwitchToUser" xml:space="preserve"><value>Passa a Utente</value></data>
-  <data name="RoleSwitchCancelled" xml:space="preserve"><value>Cambio di ruolo annullato.</value></data>
   <data name="Paste" xml:space="preserve"><value>Incolla</value></data>
   <data name="PasteHint" xml:space="preserve"><value>Incolla un file copiato o un percorso</value></data>
   <data name="ClipboardEmpty" xml:space="preserve"><value>Negli appunti non c'è un file o un percorso.</value></data>

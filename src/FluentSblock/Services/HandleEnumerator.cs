@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -219,54 +220,70 @@ public static class HandleEnumerator
             var result = new List<LockHolder>();
             var userCache = new Dictionary<uint, string>();
             var nameCache = new Dictionary<uint, string>();
+            var isFileTypeByIndex = new Dictionary<ushort, bool>();
+            var nameWorker = new NameQueryWorker();
             int n = 0;
-            // One OpenProcess per PID (handle64 re-opens only on PID change):
-            // ~200 opens instead of one per handle (~120k).
-            foreach (var group in raw.GroupBy(h => h.Pid))
+            try
             {
-                ct.ThrowIfCancellationRequested();
-                IntPtr src = OpenProcess(PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION,
-                    false, group.Key);
-                if (src == IntPtr.Zero)
-                    src = OpenProcess(PROCESS_DUP_HANDLE, false, group.Key);
-                if (src == IntPtr.Zero) { n += group.Count(); continue; }
-                try
+                // One OpenProcess per PID (handle64 re-opens only on PID change):
+                // ~200 opens instead of one per handle (~120k).
+                foreach (var group in raw.GroupBy(h => h.Pid))
                 {
-                    if (!userCache.TryGetValue(group.Key, out var user))
+                    ct.ThrowIfCancellationRequested();
+                    IntPtr src = OpenProcess(PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION,
+                        false, group.Key);
+                    if (src == IntPtr.Zero)
+                        src = OpenProcess(PROCESS_DUP_HANDLE, false, group.Key);
+                    if (src == IntPtr.Zero) { n += group.Count(); continue; }
+                    try
                     {
-                        user = TryGetProcessUser(src);
-                        userCache[group.Key] = user;
+                        if (!userCache.TryGetValue(group.Key, out var user))
+                        {
+                            user = TryGetProcessUser(src);
+                            userCache[group.Key] = user;
+                        }
+                        if (!nameCache.TryGetValue(group.Key, out var pname))
+                        {
+                            // Name from the already-open handle: works for protected
+                            // processes where a fresh full-access open would fail.
+                            pname = TryGetProcessNameFromHandle(src) ?? TryGetProcessName(group.Key);
+                            nameCache[group.Key] = pname;
+                        }
+                        foreach (var h in group)
+                        {
+                            ct.ThrowIfCancellationRequested();
+                            if ((++n & 0xFFF) == 0)
+                                progress?.Report(string.Format(progressPattern, n, raw.Count));
+                            string? dos = ResolveHandleDosPath(src, h, dosMap, isFileTypeByIndex, ref nameWorker);
+                            if (dos == null || !match(dos)) continue;
+                            result.Add(new LockHolder(pname, (int)h.Pid, user,
+                                $"0x{h.HandleValue.ToUInt64():X08}", dos, $"0x{h.GrantedAccess:X08}"));
+                        }
                     }
-                    if (!nameCache.TryGetValue(group.Key, out var pname))
-                    {
-                        // Name from the already-open handle: works for protected
-                        // processes where a fresh full-access open would fail.
-                        pname = TryGetProcessNameFromHandle(src) ?? TryGetProcessName(group.Key);
-                        nameCache[group.Key] = pname;
-                    }
-                    foreach (var h in group)
-                    {
-                        ct.ThrowIfCancellationRequested();
-                        if ((++n & 0xFFF) == 0)
-                            progress?.Report(string.Format(progressPattern, n, raw.Count));
-                        string? dos = ResolveHandleDosPath(src, h, dosMap);
-                        if (dos == null || !match(dos)) continue;
-                        result.Add(new LockHolder(pname, (int)h.Pid, user,
-                            $"0x{h.HandleValue.ToUInt64():X08}", dos, $"0x{h.GrantedAccess:X08}"));
-                    }
+                    finally { CloseHandle(src); }
                 }
-                finally { CloseHandle(src); }
             }
-            // Same file open several times: show only the first handle.
-            result = result.DistinctBy(h => h.FilePath, StringComparer.OrdinalIgnoreCase).ToList();
-            result.Sort((a, b) => string.Compare(a.FilePath, b.FilePath, StringComparison.OrdinalIgnoreCase));
+            finally
+            {
+                nameWorker.Complete();
+            }
+            // Same file open several times in the same process: keep the first handle per (PID, FilePath),
+            // while preserving all distinct processes holding the same file.
+            result = result.DistinctBy(h => (h.Pid, h.FilePath.ToUpperInvariant())).ToList();
+            result.Sort((a, b) =>
+            {
+                int cmp = string.Compare(a.FilePath, b.FilePath, StringComparison.OrdinalIgnoreCase);
+                if (cmp != 0) return cmp;
+                cmp = string.Compare(a.ProcessName, b.ProcessName, StringComparison.OrdinalIgnoreCase);
+                return cmp != 0 ? cmp : a.Pid.CompareTo(b.Pid);
+            });
             return result;
         }, ct);
     }
 
     // ---- internals ----
 
-    private sealed record RawHandle(uint Pid, UIntPtr HandleValue, uint GrantedAccess);
+    private sealed record RawHandle(uint Pid, UIntPtr HandleValue, uint GrantedAccess, ushort ObjectTypeIndex);
 
     private static List<RawHandle> QueryAllHandles()
     {
@@ -304,7 +321,7 @@ public static class HandleEnumerator
                     IntPtr.Add(entryPtr, (int)(i * entrySize)));
                 uint pid = e.UniqueProcessId.ToUInt32();
                 // Type and name resolved lazily per PID group (only File matters).
-                list.Add(new RawHandle(pid, e.HandleValue, e.GrantedAccess));
+                list.Add(new RawHandle(pid, e.HandleValue, e.GrantedAccess, e.ObjectTypeIndex));
             }
             return list;
         }
@@ -314,20 +331,39 @@ public static class HandleEnumerator
         }
     }
 
-    private static string? ResolveHandleDosPath(IntPtr src, RawHandle h,
-        List<KeyValuePair<string, string>> dosMap)
+    private static string? ResolveHandleDosPath(
+        IntPtr src,
+        RawHandle h,
+        List<KeyValuePair<string, string>> dosMap,
+        Dictionary<ushort, bool> isFileTypeByIndex,
+        ref NameQueryWorker nameWorker)
     {
+        if (isFileTypeByIndex.TryGetValue(h.ObjectTypeIndex, out bool knownFile) && !knownFile)
+            return null;
+
         if (!DuplicateHandle(src, (IntPtr)h.HandleValue.ToUInt64(),
                 GetCurrentProcess(), out IntPtr dup, 0, false, DUPLICATE_SAME_ACCESS))
             return null;
-        string type = QueryObjectType(dup);
-        if (!type.Equals("File", StringComparison.OrdinalIgnoreCase))
+
+        if (!isFileTypeByIndex.ContainsKey(h.ObjectTypeIndex))
         {
-            CloseHandle(dup);
-            return null;
+            string type = QueryObjectType(dup);
+            if (string.IsNullOrEmpty(type))
+            {
+                CloseHandle(dup);
+                return null;
+            }
+            bool isFile = type.Equals("File", StringComparison.OrdinalIgnoreCase);
+            isFileTypeByIndex[h.ObjectTypeIndex] = isFile;
+            if (!isFile)
+            {
+                CloseHandle(dup);
+                return null;
+            }
         }
-        // Ownership of dup moves to the worker: it always closes dup, even on timeout.
-        string? nt = QueryObjectNameTimeout(dup);
+
+        // Ownership of dup moves to the dedicated worker: it always closes dup, even on timeout.
+        string? nt = QueryObjectNameTimeout(dup, ref nameWorker);
         if (string.IsNullOrEmpty(nt)) return null;
         if (nt.StartsWith(@"\Device\Mup\", StringComparison.OrdinalIgnoreCase))
             return @"\\" + nt[@"\Device\Mup\".Length..]; // UNC form: matches user input style
@@ -353,20 +389,59 @@ public static class HandleEnumerator
         finally { Marshal.FreeHGlobal(buf); }
     }
 
-    private static string? QueryObjectNameTimeout(IntPtr dup)
+    /// <summary>
+    /// Dedicated background thread for NtQueryObject(ObjectNameInformation) so
+    /// blocked synchronous pipes never starve the .NET ThreadPool. Replaced on timeout.
+    /// </summary>
+    private sealed class NameQueryWorker
     {
-        // NtQueryObject(ObjectNameInformation) can block indefinitely on pipes.
-        // A pooled worker owns dup and always closes it; on timeout the worker is
-        // abandoned and closes dup when the kernel call eventually returns.
-        string? name = null;
-        var task = Task.Run(() =>
+        private readonly BlockingCollection<(IntPtr Dup, TaskCompletionSource<string?> Tcs)> _queue = new();
+
+        public NameQueryWorker()
         {
-            try { name = QueryObjectNameGrowable(dup); }
-            catch { /* treat as unresolvable */ }
-            finally { CloseHandle(dup); }
-        });
-        if (!task.Wait(QueryNameTimeoutMs)) return null;
-        return name;
+            var thread = new Thread(Run) { IsBackground = true, Name = "FluentSblock-NameQuery" };
+            thread.Start();
+        }
+
+        public void Enqueue(IntPtr dup, TaskCompletionSource<string?> tcs) => _queue.Add((dup, tcs));
+
+        public void Complete()
+        {
+            try { _queue.CompleteAdding(); } catch { }
+        }
+
+        private void Run()
+        {
+            try
+            {
+                foreach (var (dup, tcs) in _queue.GetConsumingEnumerable())
+                {
+                    string? name = null;
+                    try { name = QueryObjectNameGrowable(dup); }
+                    catch { /* treat as unresolvable */ }
+                    finally { CloseHandle(dup); }
+                    tcs.TrySetResult(name);
+                }
+            }
+            catch { }
+            finally
+            {
+                try { _queue.Dispose(); } catch { }
+            }
+        }
+    }
+
+    private static string? QueryObjectNameTimeout(IntPtr dup, ref NameQueryWorker worker)
+    {
+        var tcs = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        worker.Enqueue(dup, tcs);
+        if (tcs.Task.Wait(QueryNameTimeoutMs))
+            return tcs.Task.Result;
+        // Timed out on a blocked pipe: retire the blocked worker (it will close dup
+        // if the kernel call ever returns) and spawn a fresh worker thread immediately.
+        worker.Complete();
+        worker = new NameQueryWorker();
+        return null;
     }
 
     private static string? QueryObjectNameGrowable(IntPtr h)
@@ -462,6 +537,26 @@ public static class HandleEnumerator
     {
         try { return Process.GetProcessById((int)pid).ProcessName + ".exe"; }
         catch { return $"pid:{pid}"; }
+    }
+
+    public static (string ProcessName, string User) ResolveProcessIdentity(uint pid, string? fallbackName = null)
+    {
+        IntPtr h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_QUERY_INFORMATION, false, pid);
+        if (h == IntPtr.Zero)
+            h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+        if (h != IntPtr.Zero)
+        {
+            try
+            {
+                string name = TryGetProcessNameFromHandle(h)
+                    ?? (!string.IsNullOrWhiteSpace(fallbackName) ? fallbackName! : TryGetProcessName(pid));
+                string user = TryGetProcessUser(h);
+                return (name, user);
+            }
+            finally { CloseHandle(h); }
+        }
+        string fallback = !string.IsNullOrWhiteSpace(fallbackName) ? fallbackName! : TryGetProcessName(pid);
+        return (fallback, "");
     }
 
     private static string TryGetProcessUser(IntPtr srcProcess)

@@ -14,9 +14,6 @@
         <MenuItem x:Name="MiEject" Header="_Eject" Click="OnEjectClick" IsEnabled="False">
           <MenuItem.Icon><ContentControl Content="{StaticResource IconEject}"/></MenuItem.Icon>
         </MenuItem>
-        <MenuItem x:Name="MiSwitchRole" Header="Switch to Admin" Click="OnSwitchRoleClick">
-          <MenuItem.Icon><ContentControl Content="{StaticResource IconShield}"/></MenuItem.Icon>
-        </MenuItem>
         <MenuItem x:Name="MiExportCsv" Header="Export CSV" Click="OnExportCsvClick"/>
         <MenuItem x:Name="MiExportTsv" Header="Export TSV" Click="OnExportTsvClick"/>
         <Separator/>
@@ -66,7 +63,9 @@
           </StackPanel>
         </StatusBarItem>
       <Separator/>
-      <StatusBarItem><TextBlock x:Name="AdminText" Text=""/></StatusBarItem>
+      <StatusBarItem x:Name="AdminStatusItem" MouseLeftButtonUp="OnAdminStatusClick">
+        <TextBlock x:Name="AdminText" Text=""/>
+      </StatusBarItem>
       <StatusBarItem HorizontalAlignment="Right"><TextBlock x:Name="VersionText" Text=""/></StatusBarItem>
     </StatusBar>
 
@@ -97,21 +96,15 @@
             <AccessText x:Name="EjectBtnText" Text="_Eject" VerticalAlignment="Center"/>
           </StackPanel>
         </Button>
-        <Button x:Name="RoleBtn" MinWidth="150" Margin="8,0,0,0" Click="OnSwitchRoleClick">
-          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <ContentControl Content="{StaticResource IconShield}" Margin="0,0,6,0"/>
-            <AccessText x:Name="RoleBtnText" Text="Switch to Admin" VerticalAlignment="Center"/>
-          </StackPanel>
-        </Button>
         <TextBlock x:Name="ProgressText" VerticalAlignment="Center" Margin="12,0,0,0" Opacity="0.7" Foreground="{StaticResource AccentBrush}"/>
       </StackPanel>
 
       <Grid Grid.Row="1">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="280"/>
+          <ColumnDefinition x:Name="DriveCol" Width="0"/>
           <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <GroupBox Grid.Column="0" x:Name="DriveGroup" Header="Removable drives" Margin="0,0,8,0">
+        <GroupBox Grid.Column="0" x:Name="DriveGroup" Header="Removable drives" Margin="0,0,8,0" Visibility="Collapsed">
           <ListBox x:Name="DriveList" SelectionChanged="OnDriveSelectionChanged">
             <ListBox.ItemTemplate>
               <DataTemplate>
@@ -160,7 +153,7 @@
             <RowDefinition Height="*" MinHeight="120"/>
           </Grid.RowDefinitions>
           <StackPanel Orientation="Horizontal">
-            <TextBox x:Name="FilePathBox" Width="400" Margin="0,0,8,0"/>
+            <TextBox x:Name="FilePathBox" Width="400" Margin="0,0,8,0" KeyDown="OnFilePathKeyDown"/>
             <Button x:Name="BrowseBtn" MinWidth="100" Margin="0,0,8,0" Click="OnBrowseClick">
               <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <ContentControl Content="{StaticResource IconFolder}" Margin="0,0,6,0"/>
@@ -193,10 +186,18 @@
             </Button>
           </StackPanel>
           <DataGrid x:Name="FileHoldersGrid" Grid.Row="1" Margin="0,8,0,0">
+            <DataGrid.ContextMenu>
+              <ContextMenu>
+                <MenuItem x:Name="MiFileCopyPath" Header="Copy path" Click="OnCopyPathClick"/>
+                <MenuItem x:Name="MiFileOpenLocation" Header="Open file location" Click="OnOpenLocationClick"/>
+              </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
-              <DataGridTextColumn Header="Process" Binding="{Binding ProcessName}" Width="150"/>
-              <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="70"/>
-              <DataGridTextColumn Header="File" Binding="{Binding FilePath}" Width="*"/>
+              <DataGridTextColumn Header="Process" Binding="{Binding ProcessName}" Width="150" x:Name="FileColProcess"/>
+              <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="70" x:Name="FileColPid"/>
+              <DataGridTextColumn Header="User" Binding="{Binding User}" Width="140" x:Name="FileColUser"/>
+              <DataGridTextColumn Header="Handle" Binding="{Binding HandleHex}" Width="100" x:Name="FileColHandle"/>
+              <DataGridTextColumn Header="File" Binding="{Binding FilePath}" Width="*" x:Name="FileColFile"/>
             </DataGrid.Columns>
           </DataGrid>
         </Grid>

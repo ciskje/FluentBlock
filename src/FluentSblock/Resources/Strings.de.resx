@@ -32,9 +32,9 @@
   <data name="Browse" xml:space="preserve"><value>Durchsuchen…</value></data>
   <data name="StatusReady" xml:space="preserve"><value>Bereit</value></data>
   <data name="StatusScanning" xml:space="preserve"><value>Suche…</value></data>
-  <data name="NotElevated" xml:space="preserve"><value>Nicht erhöht — als Administrator ausführen für volle Ergebnisse</value></data>
+  <data name="NotElevated" xml:space="preserve"><value>Standardbenutzer — automatische Erhöhung bei Bedarf (für Vollscan klicken)</value></data>
   <data name="Elevated" xml:space="preserve"><value>Erhöht</value></data>
-  <data name="AboutText" xml:space="preserve"><value>FluentSblock 0.2.17 — listet Prozesse mit geöffneten Dateien auf Wechseldatenträgern.</value></data>
+  <data name="AboutText" xml:space="preserve"><value>FluentSblock 0.2.18 — listet Prozesse mit geöffneten Dateien auf Wechseldatenträgern.</value></data>
   <data name="ScanProgress" xml:space="preserve"><value>Handles werden gescannt {0}/{1}…</value></data>
   <data name="ScanFailedHandles" xml:space="preserve"><value>System-Handles konnten nicht gelesen werden (Fehler 0x{0:X8}). Als Administrator versuchen.</value></data>
   <data name="LocksFound" xml:space="preserve"><value>{0} offene Handles</value></data>
@@ -71,9 +71,6 @@
   <data name="EjectConfirmTitle" xml:space="preserve"><value>Gerät auswerfen?</value></data>
   <data name="EjectConfirmText" xml:space="preserve"><value>{0} offene Handles auf diesem Laufwerk. Trotzdem auswerfen?</value></data>
   <data name="BrowseTitle" xml:space="preserve"><value>Datei oder Ordner auswählen</value></data>
-  <data name="SwitchToAdmin" xml:space="preserve"><value>Zu Admin wechseln</value></data>
-  <data name="SwitchToUser" xml:space="preserve"><value>Zu Benutzer wechseln</value></data>
-  <data name="RoleSwitchCancelled" xml:space="preserve"><value>Rollenwechsel abgebrochen.</value></data>
   <data name="Paste" xml:space="preserve"><value>Einfügen</value></data>
   <data name="PasteHint" xml:space="preserve"><value>Kopierte Datei oder Pfad einfügen</value></data>
   <data name="ClipboardEmpty" xml:space="preserve"><value>Zwischenablage enthält keine Datei und keinen Pfad.</value></data>
