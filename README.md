@@ -9,8 +9,9 @@ ejection — and who is holding a given file locked.
 
 - **Removable drives**: lists processes with open files per volume (process, PID, user, handle, access mask, path), including USB-Fixed SSDs in enclosures.
 - **Safe eject** via `CM_Request_Device_EjectW`, with confirmation when holders exist and localized veto/error messages.
-- **Check a file**: paste a path (or drag & drop a file/folder, Browse, or the Paste button for copied files/paths) to find who holds it — UNC paths and mapped drives included.
+- **Check a file**: paste a path (or drag & drop a file/folder, Browse, or the Paste button for copied files/paths) to find who holds it — UNC paths and mapped drives included. Press `Enter` to check; results show process, PID, user, handle and path.
 - **Holders filter**, copy-path / open-location row menu, CSV/TSV export.
+- **Automatic elevation, no manual switch**: the UI always runs as standard user (no UAC at launch, drag & drop always works). When a check, scan or ejection needs system-wide visibility, a headless elevated background worker starts automatically (at most one UAC prompt per session, only if required). The status bar shows the elevation state — click it anytime for a full scan.
 - Read-only by design: no handle closing, no kernel driver, no network.
 - UI: C# .NET 8 WPF, manual Fluent 2 styling, Mica backdrop, system accent,
   inline vector icons, theme/language persistence, autostart option.
@@ -44,7 +45,10 @@ Windows has no `/proc`: the app snapshots every open handle with the native
 handle into its own process, resolves type and NT path with `NtQueryObject`,
 converts `\Device\...` to drive letters, and maps PIDs to exe names and owners
 (`SeDebugPrivilege` when available). Single files fall back to Restart Manager
-first. See [`AGENT.md`](AGENT.md) (agent spec) and [`TODO.md`](TODO.md) (roadmap).
+first. When the user-level scan finds nothing but the target may be held by
+a system/service process, the same engine runs headless and elevated in a
+background worker process over a local pipe — the window never restarts.
+See [`AGENT.md`](AGENT.md) (agent spec) and [`TODO.md`](TODO.md) (roadmap).
 
 ## Build from source
 
@@ -55,7 +59,7 @@ dotnet build src\FluentSblock\FluentSblock.csproj --artifacts-path C:/Temp/openc
 dotnet test src\FluentSblock.Tests\FluentSblock.Tests.csproj -c Debug
 ```
 
-`run-debug.bat` launches the Debug build (asks UAC when not elevated).
+`run-debug.bat` launches the Debug build (no UAC at launch; elevation is automatic on demand).
 `installer\build-setup.bat` rebuilds the Inno Setup installer (needs Inno Setup 6/7).
 
 ## License
