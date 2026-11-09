@@ -443,9 +443,10 @@ public static class HandleEnumerator
         // Expiry budgets: started queries get QueryNameTimeoutMs from their
         // start. Queued-but-unstarted items never expire while the pool can
         // still grow (Grow recovers them onto fresh threads); they expire
-        // only when the pool is capped and wedged — then the scan must advance
-        // and their dup leaks only if no thread ever takes it (bounded,
-        // pathological case: kernel never answers anything).
+        // once the pool is capped and wedged, or in the final drain when the
+        // pool is wedged and no more work will arrive — then the scan must
+        // advance and their dup leaks only if no thread ever takes it
+        // (bounded, pathological case: kernel never answers anything).
         bool capped = pool.ThreadCount >= NameQueryPool.MaxThreads;
         while (pending.Count > 0 && (final || pending.Count >= NameQueryWindow))
         {
@@ -464,7 +465,12 @@ public static class HandleEnumerator
                 long started = Volatile.Read(ref p.StartedTicks);
                 if (started == 0)
                 {
-                    if (capped && now - p.EnqueuedTicks >= 4L * QueryNameTimeoutMs)
+                    // Final drain: no more work will ever be enqueued. If the
+                    // pool is wedged (no result for 2 budgets) a queued item
+                    // will never start: expire it after its budget instead of
+                    // hanging here until the caller cancels.
+                    bool wedged = now - pool.LastResultTicks > 2L * QueryNameTimeoutMs;
+                    if ((capped || (final && wedged)) && now - p.EnqueuedTicks >= 4L * QueryNameTimeoutMs)
                     {
                         p.Tcs.TrySetResult(null);
                         done.Add(p);
@@ -498,10 +504,11 @@ public static class HandleEnumerator
                 pool.Grow();
             if (done.Count > 0 && !final) return;
             if (pending.Count == 0) return;
-            if (!anyBillable)
+            if (!anyBillable || minRemain == long.MaxValue)
             {
-                // Nothing can complete on its own (all wedged or capped out):
-                // re-sweep shortly instead of sleeping on a dead pool.
+                // Nothing that can complete on its own (all wedged or capped
+                // out, or everything billable just expired): re-sweep shortly
+                // instead of sleeping on tasks that may never complete.
                 Task.WaitAny(tasks: Array.Empty<Task>(), millisecondsTimeout: 500, cancellationToken: ct);
                 continue;
             }

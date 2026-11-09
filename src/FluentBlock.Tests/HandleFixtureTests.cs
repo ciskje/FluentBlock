@@ -22,7 +22,7 @@ public sealed class HandleFixtureTests
     [Fact(Timeout = 300000)]
     public async Task LockedFileAppearsInBothEnumerators()
     {
-        string fixture = Path.Combine(Path.GetTempPath(), $"fluentSblock-golden-{Guid.NewGuid():N}.tmp");
+        string fixture = Path.Combine(Path.GetTempPath(), $"fluentBlock-golden-{Guid.NewGuid():N}.tmp");
         await File.WriteAllTextAsync(fixture, "golden");
         // Fresh files may be held exclusively by AV for a while: wait until
         // the file is freely openable, otherwise both our scan and handle64
@@ -75,7 +75,7 @@ public sealed class HandleFixtureTests
     [Fact(Timeout = 300000)]
     public async Task WorkerPipeProtocolRoundtripFindsLockedFile()
     {
-        string fixture = Path.Combine(Path.GetTempPath(), $"fluentSblock-worker-{Guid.NewGuid():N}.tmp");
+        string fixture = Path.Combine(Path.GetTempPath(), $"fluentBlock-worker-{Guid.NewGuid():N}.tmp");
         await File.WriteAllTextAsync(fixture, "worker-test");
         await WaitForExclusiveAccessAsync(fixture, _out);
         using var locked = new FileStream(fixture, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);

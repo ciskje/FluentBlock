@@ -128,6 +128,7 @@ Goal: faster, robust scan following the real handle64.exe flow
 - [x] Handle counter back on enumeration (always moves again, like before parallelization)
 - [x] Wedged elevated worker is shut down on scan timeout so the next scan starts clean (`ScanTimeout` resx in 5 languages)
 - [x] Project renamed FluentSblock → FluentBlock: namespaces/assembly/resx/installer/docs, `src/FluentBlock[.Tests]`, repo `github.com/ciskje/FluentBlock`, local folder, cert `.pfx`/`.cer` filenames (cert subject stays `CN=FluentSblock` until reissued; same Inno AppId so setup upgrades in place; settings auto-migrate once from old `%APPDATA%` path)
+- [x] `DrainPending` always terminates under burst wedge: final drain expires wedged queued queries instead of hanging to caller cancellation, no infinite wait when everything billable expires in one sweep (was: 4 min hang to CTS in the golden test under load)
 - [x] `ChangelogBody` 0.2.26 entry in 5 languages; `AboutText` 0.2.26; `VERSION`+csproj `0.2.26`
 - [ ] Manual test: insert stick on a sick box — within 60 s the UI is usable again with the timeout message
 - [ ] Tag `v0.2.26`
