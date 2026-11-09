@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="AppTitle" xml:space="preserve"><value>FluentBlock — who holds files open?</value></data>
+  <data name="MenuFile" xml:space="preserve"><value>_File</value></data>
+  <data name="MenuView" xml:space="preserve"><value>_View</value></data>
+  <data name="MenuHelp" xml:space="preserve"><value>_Help</value></data>
+  <data name="MenuRefresh" xml:space="preserve"><value>_Refresh</value></data>
+  <data name="MenuEject" xml:space="preserve"><value>_Eject</value></data>
+  <data name="MenuExit" xml:space="preserve"><value>E_xit</value></data>
+  <data name="MenuTheme" xml:space="preserve"><value>_Theme</value></data>
+  <data name="MenuLanguage" xml:space="preserve"><value>_Language</value></data>
+  <data name="MenuAbout" xml:space="preserve"><value>_About</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>System</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="DriveGroup" xml:space="preserve"><value>Removable drives</value></data>
+  <data name="NoDrives" xml:space="preserve"><value>No removable drives found.</value></data>
+  <data name="HoldersGroup" xml:space="preserve"><value>Programs with open files</value></data>
+  <data name="NoLocks" xml:space="preserve"><value>No open files — safe to eject.</value></data>
+  <data name="ColProcess" xml:space="preserve"><value>Process</value></data>
+  <data name="ColPid" xml:space="preserve"><value>PID</value></data>
+  <data name="ColUser" xml:space="preserve"><value>User</value></data>
+  <data name="ColHandle" xml:space="preserve"><value>Handle</value></data>
+  <data name="ColFile" xml:space="preserve"><value>File</value></data>
+  <data name="CheckFileGroup" xml:space="preserve"><value>Check a file — who has it locked?</value></data>
+  <data name="CheckFileHint" xml:space="preserve"><value>Full path, e.g. E:\docs\file.txt</value></data>
+  <data name="CheckFileButton" xml:space="preserve"><value>Who is locking it?</value></data>
+  <data name="Browse" xml:space="preserve"><value>Browse…</value></data>
+  <data name="StatusReady" xml:space="preserve"><value>Ready</value></data>
+  <data name="StatusScanning" xml:space="preserve"><value>Scanning…</value></data>
+  <data name="NotElevated" xml:space="preserve"><value>Standard user — elevates automatically when needed (click for full scan)</value></data>
+  <data name="Elevated" xml:space="preserve"><value>Elevated</value></data>
+  <data name="AboutText" xml:space="preserve"><value>FluentBlock 0.2.26 — lists processes with open files on removable drives.</value></data>
+  <data name="ScanProgress" xml:space="preserve"><value>Scanning handles {0}/{1}…</value></data>
+  <data name="ScanFailedHandles" xml:space="preserve"><value>Cannot read system handles (error 0x{0:X8}). Try running as administrator.</value></data>
+  <data name="LocksFound" xml:space="preserve"><value>{0} open handles</value></data>
+  <data name="RmFallback" xml:space="preserve"><value>Restart Manager: no result, scanning handles…</value></data>
+  <data name="VetoUnknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="VetoLegacyDevice" xml:space="preserve"><value>Legacy device</value></data>
+  <data name="VetoPendingClose" xml:space="preserve"><value>Open files</value></data>
+  <data name="VetoWindowsApp" xml:space="preserve"><value>Application</value></data>
+  <data name="VetoWindowsService" xml:space="preserve"><value>Service</value></data>
+  <data name="VetoOutstandingOpen" xml:space="preserve"><value>Open handle</value></data>
+  <data name="VetoDevice" xml:space="preserve"><value>Device</value></data>
+  <data name="VetoDriver" xml:space="preserve"><value>Driver</value></data>
+  <data name="VetoIllegalDeviceRequest" xml:space="preserve"><value>Illegal request</value></data>
+  <data name="VetoInsufficientPower" xml:space="preserve"><value>Insufficient power</value></data>
+  <data name="VetoNonDisableable" xml:space="preserve"><value>Non-disableable device</value></data>
+  <data name="VetoLegacyDriver" xml:space="preserve"><value>Legacy driver</value></data>
+  <data name="VetoInsufficientRights" xml:space="preserve"><value>Insufficient rights</value></data>
+  <data name="EjectOk" xml:space="preserve"><value>Device can be safely removed.</value></data>
+  <data name="MenuTimeout" xml:space="preserve"><value>Timeout</value></data>
+  <data name="EjectDialogTitle" xml:space="preserve"><value>Cannot eject device</value></data>
+  <data name="EjectVetoCause" xml:space="preserve"><value>Blocked by {0}: {1}.</value></data>
+  <data name="EjectVetoRemedy" xml:space="preserve"><value>What to do: 1) Save your work in the programs listed below. 2) Close those programs (or at least the files open on this drive). 3) Click Eject again.</value></data>
+  <data name="EjectErrorCause" xml:space="preserve"><value>Ejection failed (error 0x{0:X8}).</value></data>
+  <data name="EjectErrorRemedy" xml:space="preserve"><value>What to do: 1) Close every program using this drive, then click Eject again. 2) If it still fails, wait a few seconds and retry. 3) As a last resort use Windows “Safely Remove Hardware”.</value></data>
+  <data name="EjectBlockersTitle" xml:space="preserve"><value>Programs blocking ejection ({0}):</value></data>
+  <data name="EjectNoBlockers" xml:space="preserve"><value>No open files found in the scan — the block may be temporary (Explorer preview, antivirus or search indexer). Wait a few seconds and try Eject again.</value></data>
+  <data name="EjectProtectedTitle" xml:space="preserve"><value>Protected programs that could not be inspected ({0}):</value></data>
+  <data name="EjectProtectedHint" xml:space="preserve"><value>Windows reports an open handle owned by one of these protected programs (often antivirus). Pause or close it, then click Eject again.</value></data>
+  <data name="ScanTimeout" xml:space="preserve"><value>Scan timed out — try again.</value></data>
+  <data name="MenuAutostart" xml:space="preserve"><value>Start with Windows</value></data>
+  <data name="FilterHint" xml:space="preserve"><value>Filter by process or file name</value></data>
+  <data name="MenuCopyPath" xml:space="preserve"><value>Copy path</value></data>
+  <data name="MenuOpenLocation" xml:space="preserve"><value>Open file location</value></data>
+  <data name="ColAccess" xml:space="preserve"><value>Access</value></data>
+  <data name="MenuExportCsv" xml:space="preserve"><value>Export CSV</value></data>
+  <data name="MenuExportTsv" xml:space="preserve"><value>Export TSV</value></data>
+  <data name="MenuShowLog" xml:space="preserve"><value>Show log</value></data>
+  <data name="MenuChangelog" xml:space="preserve"><value>_Changelog</value></data>
+  <data name="ChangelogTitle" xml:space="preserve"><value>Changelog — what changed in each version</value></data>
+  <data name="ChangelogBody" xml:space="preserve"><value>• 0.2.26 — Scans can't stall the UI anymore: 60-second cap with a clear message, and the handle counter moves again.
+• 0.2.25 — No more multi-second scan freezes: parallel name lookups, owner lookup only for matches.
+• 0.2.24 — Scan log shows elapsed time, to tell slow AV filters apart from stalls.
+• 0.2.23 — Eject names hidden blockers too: protected programs (e.g. antivirus) and deep rescan.
+• 0.2.22 — Fixed mixed languages: every window now follows the selected UI language.
+• 0.2.21 — Wait cursor while ejecting; changelog follows the UI language.
+• 0.2.20 — Changelog menu (this list).
+• 0.2.19 — Blocked-eject dialog names the exact programs, red icon, step-by-step remedy.
+• 0.2.18 — Automatic on-demand elevation; UI always runs as standard user, drag and drop always works.
+• 0.2.17 — Starts as standard user, no UAC prompt at launch.
+• 0.2.16 — Admin/User switch, paste from clipboard.
+• 0.2.15 — Configurable scan timeout (50–500 ms).
+• 0.2.14 — Eject veto reasons fully translated.
+• 0.2.13 — Dedicated dialog for failed ejection.
+• 0.2.12 — Correct veto codes and friendly device names.
+• 0.2.11 / 0.2.10 — Sharp About icon.
+• 0.2.9 / 0.2.8 / 0.2.7 / 0.2.6 — Program Files install, versioned setup, post-install launch.
+• 0.2.5 — Tagline and About dialog with big icon.
+• 0.2.4 — Warning when drag and drop is blocked (elevated).
+• 0.2.3 — Full-width strings fixed in every language.
+• 0.2.2 — Sources and docs in English.
+• 0.2.1 — Drag and drop onto the file field.
+• 0.2.0 — Safe eject, Access column, CSV/TSV export, USB auto-refresh, log.
+• 0.1.5 — Draggable splitter, vector icons, scan animations.
+• 0.1.4 — UNC and mapped-drive paths supported.
+• 0.1.3 — Audit fixes, F5 refresh, works as non-admin.
+• 0.1.2 — Fast robust scan (handle64-style engine).
+• 0.1.1 — External USB SSD detection.
+• 0.1.0 — First base: per-drive locks, file check, EFIGS, Fluent style.</value></data>
+  <data name="EjectError" xml:space="preserve"><value>Eject failed (error 0x{0:X8}).</value></data>
+  <data name="EjectConfirmTitle" xml:space="preserve"><value>Eject device?</value></data>
+  <data name="EjectConfirmText" xml:space="preserve"><value>{0} open handles on this drive. Eject anyway?</value></data>
+  <data name="BrowseTitle" xml:space="preserve"><value>Select a file or folder</value></data>
+  <data name="Paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="PasteHint" xml:space="preserve"><value>Paste a copied file or path</value></data>
+  <data name="ClipboardEmpty" xml:space="preserve"><value>Clipboard has no file or path.</value></data>
+</root>

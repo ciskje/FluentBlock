@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="AppTitle" xml:space="preserve"><value>FluentBlock — chi tiene file aperti?</value></data>
+  <data name="MenuFile" xml:space="preserve"><value>_File</value></data>
+  <data name="MenuView" xml:space="preserve"><value>_Visualizza</value></data>
+  <data name="MenuHelp" xml:space="preserve"><value>_?</value></data>
+  <data name="MenuRefresh" xml:space="preserve"><value>_Aggiorna</value></data>
+  <data name="MenuEject" xml:space="preserve"><value>_Espelli</value></data>
+  <data name="MenuExit" xml:space="preserve"><value>_Esci</value></data>
+  <data name="MenuTheme" xml:space="preserve"><value>_Tema</value></data>
+  <data name="MenuLanguage" xml:space="preserve"><value>_Lingua</value></data>
+  <data name="MenuAbout" xml:space="preserve"><value>_Informazioni</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>Sistema</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Chiaro</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Scuro</value></data>
+  <data name="DriveGroup" xml:space="preserve"><value>Dischi rimovibili</value></data>
+  <data name="NoDrives" xml:space="preserve"><value>Nessun disco rimovibile trovato.</value></data>
+  <data name="HoldersGroup" xml:space="preserve"><value>Programmi con file aperti</value></data>
+  <data name="NoLocks" xml:space="preserve"><value>Nessun file aperto — espulsione sicura.</value></data>
+  <data name="ColProcess" xml:space="preserve"><value>Processo</value></data>
+  <data name="ColPid" xml:space="preserve"><value>PID</value></data>
+  <data name="ColUser" xml:space="preserve"><value>Utente</value></data>
+  <data name="ColHandle" xml:space="preserve"><value>Handle</value></data>
+  <data name="ColFile" xml:space="preserve"><value>File</value></data>
+  <data name="CheckFileGroup" xml:space="preserve"><value>Controlla un file — chi lo tiene bloccato?</value></data>
+  <data name="CheckFileHint" xml:space="preserve"><value>Percorso completo, es. E:\docs\file.txt</value></data>
+  <data name="CheckFileButton" xml:space="preserve"><value>Chi lo blocca?</value></data>
+  <data name="Browse" xml:space="preserve"><value>Sfoglia…</value></data>
+  <data name="StatusReady" xml:space="preserve"><value>Pronto</value></data>
+  <data name="StatusScanning" xml:space="preserve"><value>Scansione…</value></data>
+  <data name="NotElevated" xml:space="preserve"><value>Utente standard — elevazione automatica se serve (clicca per scansione completa)</value></data>
+  <data name="Elevated" xml:space="preserve"><value>Elevato</value></data>
+  <data name="AboutText" xml:space="preserve"><value>FluentBlock 0.2.26 — elenca i processi con file aperti sui dischi rimovibili.</value></data>
+  <data name="ScanProgress" xml:space="preserve"><value>Scansione handle {0}/{1}…</value></data>
+  <data name="ScanFailedHandles" xml:space="preserve"><value>Impossibile leggere gli handle di sistema (errore 0x{0:X8}). Prova come amministratore.</value></data>
+  <data name="LocksFound" xml:space="preserve"><value>{0} handle aperti</value></data>
+  <data name="RmFallback" xml:space="preserve"><value>Restart Manager: nessun risultato, scansione handle…</value></data>
+  <data name="VetoUnknown" xml:space="preserve"><value>Sconosciuto</value></data>
+  <data name="VetoLegacyDevice" xml:space="preserve"><value>Dispositivo legacy</value></data>
+  <data name="VetoPendingClose" xml:space="preserve"><value>File aperti</value></data>
+  <data name="VetoWindowsApp" xml:space="preserve"><value>Applicazione</value></data>
+  <data name="VetoWindowsService" xml:space="preserve"><value>Servizio</value></data>
+  <data name="VetoOutstandingOpen" xml:space="preserve"><value>Handle aperto</value></data>
+  <data name="VetoDevice" xml:space="preserve"><value>Dispositivo</value></data>
+  <data name="VetoDriver" xml:space="preserve"><value>Driver</value></data>
+  <data name="VetoIllegalDeviceRequest" xml:space="preserve"><value>Richiesta non valida</value></data>
+  <data name="VetoInsufficientPower" xml:space="preserve"><value>Alimentazione insufficiente</value></data>
+  <data name="VetoNonDisableable" xml:space="preserve"><value>Dispositivo non disabilitabile</value></data>
+  <data name="VetoLegacyDriver" xml:space="preserve"><value>Driver legacy</value></data>
+  <data name="VetoInsufficientRights" xml:space="preserve"><value>Diritti insufficienti</value></data>
+  <data name="EjectOk" xml:space="preserve"><value>Il dispositivo può essere rimosso in sicurezza.</value></data>
+  <data name="MenuTimeout" xml:space="preserve"><value>Timeout</value></data>
+  <data name="EjectDialogTitle" xml:space="preserve"><value>Impossibile espellere il dispositivo</value></data>
+  <data name="EjectVetoCause" xml:space="preserve"><value>Bloccato da {0}: {1}.</value></data>
+  <data name="EjectVetoRemedy" xml:space="preserve"><value>Cosa fare: 1) Salva il lavoro nei programmi elencati qui sotto. 2) Chiudi quei programmi (o almeno i file aperti su questo disco). 3) Premi di nuovo Espelli.</value></data>
+  <data name="EjectErrorCause" xml:space="preserve"><value>Espulsione non riuscita (errore 0x{0:X8}).</value></data>
+  <data name="EjectErrorRemedy" xml:space="preserve"><value>Cosa fare: 1) Chiudi tutti i programmi che usano questo disco, poi premi di nuovo Espelli. 2) Se non funziona, attendi qualche secondo e riprova. 3) Come ultima risorsa usa “Rimozione sicura hardware” di Windows.</value></data>
+  <data name="EjectBlockersTitle" xml:space="preserve"><value>Programmi che bloccano l'espulsione ({0}):</value></data>
+  <data name="EjectNoBlockers" xml:space="preserve"><value>Nessun file aperto trovato — il blocco potrebbe essere temporaneo (anteprima di Explorer, antivirus o indicizzazione). Attendi qualche secondo e premi di nuovo Espelli.</value></data>
+  <data name="EjectProtectedTitle" xml:space="preserve"><value>Programmi protetti che non è stato possibile ispezionare ({0}):</value></data>
+  <data name="EjectProtectedHint" xml:space="preserve"><value>Windows segnala un handle aperto di uno di questi programmi protetti (spesso l'antivirus). Mettilo in pausa o chiudilo, poi premi di nuovo Espelli.</value></data>
+  <data name="ScanTimeout" xml:space="preserve"><value>Scansione interrotta (timeout) — riprova.</value></data>
+  <data name="MenuAutostart" xml:space="preserve"><value>Avvia con Windows</value></data>
+  <data name="FilterHint" xml:space="preserve"><value>Filtra per processo o nome file</value></data>
+  <data name="MenuCopyPath" xml:space="preserve"><value>Copia percorso</value></data>
+  <data name="MenuOpenLocation" xml:space="preserve"><value>Apri percorso file</value></data>
+  <data name="ColAccess" xml:space="preserve"><value>Accesso</value></data>
+  <data name="MenuExportCsv" xml:space="preserve"><value>Esporta CSV</value></data>
+  <data name="MenuExportTsv" xml:space="preserve"><value>Esporta TSV</value></data>
+  <data name="MenuShowLog" xml:space="preserve"><value>Mostra log</value></data>
+  <data name="MenuChangelog" xml:space="preserve"><value>_Changelog</value></data>
+  <data name="ChangelogTitle" xml:space="preserve"><value>Changelog — cosa è cambiato in ogni versione</value></data>
+  <data name="ChangelogBody" xml:space="preserve"><value>• 0.2.26 — Le scansioni non bloccano più la UI: limite di 60 secondi con messaggio chiaro, e il contatore avanza di nuovo.
+• 0.2.25 — Niente più blocchi di secondi nella scansione: nomi in parallelo, utente solo per i trovati.
+• 0.2.24 — Il log mostra i tempi di scansione, per distinguere filtri AV lenti dai blocchi.
+• 0.2.23 — Espulsione: nomina anche i bloccanti nascosti (programmi protetti, es. antivirus) e riscansione approfondita.
+• 0.2.22 — Fix lingue miste: ogni finestra segue la lingua UI selezionata.
+• 0.2.21 — Cursore di attesa durante l'espulsione; changelog nella lingua UI.
+• 0.2.20 — Menu Changelog (questo elenco).
+• 0.2.19 — Espulsione bloccata: elenca i programmi esatti, icona rossa e passi da seguire.
+• 0.2.18 — Elevazione automatica su richiesta; UI sempre da utente standard, trascinamento sempre attivo.
+• 0.2.17 — Avvio come utente standard, niente UAC all'apertura.
+• 0.2.16 — Commutazione Utente/Admin, incolla dagli appunti.
+• 0.2.15 — Timeout di scansione configurabile (50–500 ms).
+• 0.2.14 — Motivi di blocco tradotti nella lingua UI.
+• 0.2.13 — Dialogo dedicato per espulsione non riuscita.
+• 0.2.12 — Codici di veto corretti e nomi dispositivo leggibili.
+• 0.2.11 / 0.2.10 — Icona Informazioni nitida.
+• 0.2.9 / 0.2.8 / 0.2.7 / 0.2.6 — Installazione in Program Files, setup con versione, avvio post-installazione.
+• 0.2.5 — Slogan e dialogo Informazioni con icona grande.
+• 0.2.4 — Avviso quando il trascinamento è bloccato (elevato).
+• 0.2.3 — Stringhe intere corrette in tutte le lingue.
+• 0.2.2 — Sorgenti e documenti in inglese.
+• 0.2.1 — Trascinamento file sul campo di controllo.
+• 0.2.0 — Espulsione sicura, colonna Accesso, export CSV/TSV, auto-refresh USB, log.
+• 0.1.5 — Splitter trascinabile, icone vettoriali, animazioni di scansione.
+• 0.1.4 — Supporto percorsi UNC e unità mappate.
+• 0.1.3 — Fix audit, refresh con F5, funziona non da admin.
+• 0.1.2 — Scansione veloce e robusta (motore stile handle64).
+• 0.1.1 — Rilevamento SSD USB esterni.
+• 0.1.0 — Base iniziale: lock per disco, controllo file, EFIGS, stile Fluent.</value></data>
+  <data name="EjectError" xml:space="preserve"><value>Espulsione non riuscita (errore 0x{0:X8}).</value></data>
+  <data name="EjectConfirmTitle" xml:space="preserve"><value>Espellere il dispositivo?</value></data>
+  <data name="EjectConfirmText" xml:space="preserve"><value>{0} handle aperti su questo drive. Espellere comunque?</value></data>
+  <data name="BrowseTitle" xml:space="preserve"><value>Seleziona un file o una cartella</value></data>
+  <data name="Paste" xml:space="preserve"><value>Incolla</value></data>
+  <data name="PasteHint" xml:space="preserve"><value>Incolla un file copiato o un percorso</value></data>
+  <data name="ClipboardEmpty" xml:space="preserve"><value>Negli appunti non c'è un file o un percorso.</value></data>
+</root>

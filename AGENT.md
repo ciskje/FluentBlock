@@ -1,12 +1,12 @@
-# FluentSblock — AGENT.md
+# FluentBlock — AGENT.md
 
 Specs for coding agents. Source of truth for purpose, architecture, UI, versioning.
 
 ## 1. Identity
 
-- Name: `FluentSblock` (working title: "who holds files open?")
-- Current version: `0.2.18` — see `VERSION` (single-line `X.Y.Z`).
-- Repo/dir: `Z:\Lavorazioni\2026\AI\FluentSblock`.
+- Name: `FluentBlock` (working title: "who holds files open?")
+- Current version: `0.2.26` — see `VERSION` (single-line `X.Y.Z`).
+- Repo/dir: `Z:\Lavorazioni\2026\AI\FluentBlock`.
 - Stack v0.1: **C# .NET 8 WPF** (no WinUI3 packaging) with manual Fluent 2 styling.
   Reason: builds with only SDK 8.0.425 installed, no extra workloads, single testable exe.
   Migration to WinUI 3 / WindowsAppSDK can be evaluated in `1.0.0` without changing `Services/`.
@@ -38,7 +38,7 @@ Read-only + safe ejection via system APIs (with confirmation when holders>0).
 ## 4. Main window layout (`MainWindow.xaml`)
 
 ```
-MenuBar: File | View | ?/Help  (File>Refresh,Eject,Export CSV/TSV,Exit; View>Theme,Language,Autostart,Timeout; Help>Show log,About)
+MenuBar: File | View | ?/Help  (File>Refresh,Eject,Export CSV/TSV,Exit; View>Theme,Language,Autostart,Timeout; Help>Show log,Changelog,About)
 Toolbar: [Drive ComboBox] [Refresh F5] [Eject]
 Split:
   Left: ListView of removable drives (letter, label; auto-collapses when <= 1 drive or < 700px) — empty state: "No removable drives"
@@ -59,17 +59,18 @@ LICENSE.txt                     # MIT © 2026 Francesco Ferrara
 docs/screenshot.png             # main window screenshot for README
 screenshot/                     # original user captures (not cropped)
 dist/                           # release: Setup.exe + msix + exe + VERSION.txt + README.txt
-installer/                      # FluentSblock.iss (Program Files Inno, versioned output) + build-setup.bat (/DAppVersion from VERSION) + FluentSblock.cer (public)
+installer/                      # FluentBlock.iss (Program Files Inno, versioned output) + build-setup.bat (/DAppVersion from VERSION) + FluentBlock.cer (public)
 AGENT.md                        # this file
 TODO.md                         # activity tracking
-src/FluentSblock/
-  FluentSblock.csproj           # net8.0-windows, UseWPF, x64, Version 0.2.18
+src/FluentBlock/
+  FluentBlock.csproj           # net8.0-windows, UseWPF, x64, Version 0.2.26
   app.manifest                  # asInvoker: UI stays as User, headless elevated --worker spawned on demand
-src/FluentSblock.Tests/
-  FluentSblock.Tests.csproj     # xUnit golden: locked fixture vs handle64 -v
+src/FluentBlock.Tests/
+  FluentBlock.Tests.csproj     # xUnit: golden fixture vs handle64 -v + EfigsTests (key parity EFIGS)
   App.xaml[.cs]                 # theme, language, DWM Mica
   AboutWindow.xaml[.cs]         # About dialog with big app icon (dedicated PNG)
   EjectErrorDialog.xaml[.cs]    # eject blocked/failed dialog (title, cause, remedy)
+  ChangelogWindow.xaml[.cs]      # Help>Changelog: scrollable bullet list of version changes (EFIGS)
   MainWindow.xaml[.cs]          # layout §4, light MVVM code-behind in v0.1
   Models/
     RemovableDrive.cs           # Letter, Label
@@ -98,8 +99,8 @@ MVVM: v0.1 code-behind + `ObservableCollection` is enough. Introduce CommunityTo
 - Per handle: `DuplicateHandle(DUPLICATE_SAME_ACCESS)` then `NtQueryObject(ObjectTypeInformation)` — keep only `File`; `NtQueryObject(ObjectNameInformation)` for the NT path (`\Device\HarddiskVolumeN\...`).
 - NT→DOS conversion: `QueryDosDeviceW` per letter + cache, longest-prefix-first match; `\Device\Mup\...` converted to UNC `\\server\share...`. For network paths/letters: equivalent forms via `WNetGetUniversalName` (DOS + NT + UNC + MUP all compared).
 - Volume filter: DOS path `startswith "E:\"` (case-insensitive). For a single file field: exact match + directory-prefix match.
-- User: `OpenProcessToken(TOKEN_QUERY)` on the already-open process handle + `GetTokenInformation(TokenUser)` + `LookupAccountSidW`, fallback `""`, per-PID cache.
-- Performance: async scan with `CancellationToken`, `IProgress`, pool-based name queries with 100 ms timeout (avoids pipe hangs). Names/users resolved once per PID from the already-open handle.
+- User: resolved lazily via `ResolveProcessIdentity` only for distinct matched PIDs (`LookupAccountSidW` can stall seconds on a slow DC — most scanned PIDs never match).
+- Performance: async scan with `CancellationToken`, `IProgress`, shared-queue pool of 8 name-query threads with 100 ms timeout, owner resolved lazily for matches only. UI never awaits a scan past 60 s (timeout + wedged-worker reset).
 - Restart Manager (for `FileLockChecker`): `RmStartSession/RmRegisterResources/RmGetList` — official path, works without `SeDebug` in many cases. Use it for the file field, handle enumeration for volume scans.
 
 Prohibited: no SYS/driver writes, no handle closing, no `Services` keys, no network.
@@ -125,10 +126,10 @@ Prohibited: no SYS/driver writes, no handle closing, no `Services` keys, no netw
 ## 9. Mandatory agent workflow
 
 - Build/output paths: machine policy. Never commit `bin/obj`.
-- Minimum before saying "done": green `dotnet build` + green `dotnet test src/FluentSblock.Tests` + screenshot/file list + `VERSION` matching csproj.
-- Release in `dist/`: `dotnet publish src/FluentSblock/FluentSblock.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false --artifacts-path C:/Temp/opencode/FluentSblock-publish`, smoke-test the exe per machine policy, then copy exe + `VERSION.txt` + `README.txt` into `dist/` and clean the temp.
-- Releases: every `dist/` publish also publishes the GitHub release — `gh release create vX.Y.Z --title "FluentSblock X.Y.Z" --notes "..." dist/FluentSblock-Setup-X.Y.Z.exe dist/FluentSblock.msix dist/FluentSblock.exe`, then `gh release edit vX.Y.Z --latest`. Never leave a pushed tag without its release.
-- MSIX: tools from NuGet `Microsoft.Windows.SDK.BuildTools` (makeappx+signtool x64, no admin SDK); private key in `%USERPROFILE%\certs\FluentSblock.pfx` (password in `%USERPROFILE%\certs\password.txt`, NEVER in repo), public in `installer/FluentSblock.cer`; manifest Identity `Version` tracks the release (`X.Y.Z.0`), `CN=FluentSblock`; unpack previous msix for manifest+Assets, swap exe, pack → `signtool sign -fd SHA256` → `signtool verify -pa` (fails until the cert is in TrustedPeople).
+- Minimum before saying "done": green `dotnet build` + green `dotnet test src/FluentBlock.Tests` + screenshot/file list + `VERSION` matching csproj.
+- Release in `dist/`: `dotnet publish src/FluentBlock/FluentBlock.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false --artifacts-path C:/Temp/opencode/FluentBlock-publish`, smoke-test the exe per machine policy, then copy exe + `VERSION.txt` + `README.txt` into `dist/` and clean the temp.
+- Releases: every `dist/` publish also publishes the GitHub release — `gh release create vX.Y.Z --title "FluentBlock X.Y.Z" --notes "..." dist/FluentBlock-Setup-X.Y.Z.exe dist/FluentBlock.msix dist/FluentBlock.exe`, then `gh release edit vX.Y.Z --latest`. Never leave a pushed tag without its release.
+- MSIX: tools from NuGet `Microsoft.Windows.SDK.BuildTools` (makeappx+signtool x64, no admin SDK); private key in `%USERPROFILE%\certs\FluentBlock.pfx` (password in `%USERPROFILE%\certs\password.txt`, NEVER in repo), public in `installer/FluentBlock.cer`; manifest Identity `Version` tracks the release (`X.Y.Z.0`), `CN=FluentBlock`; unpack previous msix for manifest+Assets, swap exe, pack → `signtool sign -fd SHA256` → `signtool verify -pa` (fails until the cert is in TrustedPeople).
 - Don't create files beyond §5 without need. Prefer edits over new files.
 - Manual tests: (a) no USB → empty state; (b) USB with file open in Notepad → expected row; (c) file field with locked `C:\...` → same PID; (d) switch language to each EFIGS without crash.
 - Reply language to the user: Italian. Code comments: English, concise.

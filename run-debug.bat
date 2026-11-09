@@ -1,9 +1,9 @@
 @echo off
 setlocal
-set EXE=C:\Temp\opencode\FluentSblock-artifacts\bin\FluentSblock\debug\FluentSblock.exe
+set EXE=C:\Temp\opencode\FluentBlock-artifacts\bin\FluentBlock\debug\FluentBlock.exe
 if not exist "%EXE%" (
-  echo [FluentSblock] Debug exe not found: %EXE%
-  echo Build first: dotnet build src\FluentSblock\FluentSblock.csproj --artifacts-path C:/Temp/opencode/FluentSblock-artifacts -c Debug
+  echo [FluentBlock] Debug exe not found: %EXE%
+  echo Build first: dotnet build src\FluentBlock\FluentBlock.csproj --artifacts-path C:/Temp/opencode/FluentBlock-artifacts -c Debug
   exit /b 1
 )
 start "" "%EXE%" %*

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="AppTitle" xml:space="preserve"><value>FluentBlock — qui garde des fichiers ouverts ?</value></data>
+  <data name="MenuFile" xml:space="preserve"><value>_Fichier</value></data>
+  <data name="MenuView" xml:space="preserve"><value>_Affichage</value></data>
+  <data name="MenuHelp" xml:space="preserve"><value>_Aide</value></data>
+  <data name="MenuRefresh" xml:space="preserve"><value>_Actualiser</value></data>
+  <data name="MenuEject" xml:space="preserve"><value>_Éjecter</value></data>
+  <data name="MenuExit" xml:space="preserve"><value>_Quitter</value></data>
+  <data name="MenuTheme" xml:space="preserve"><value>_Thème</value></data>
+  <data name="MenuLanguage" xml:space="preserve"><value>_Langue</value></data>
+  <data name="MenuAbout" xml:space="preserve"><value>_À propos</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>Système</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Clair</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Sombre</value></data>
+  <data name="DriveGroup" xml:space="preserve"><value>Lecteurs amovibles</value></data>
+  <data name="NoDrives" xml:space="preserve"><value>Aucun lecteur amovible trouvé.</value></data>
+  <data name="HoldersGroup" xml:space="preserve"><value>Programmes avec fichiers ouverts</value></data>
+  <data name="NoLocks" xml:space="preserve"><value>Aucun fichier ouvert — éjection sûre.</value></data>
+  <data name="ColProcess" xml:space="preserve"><value>Processus</value></data>
+  <data name="ColPid" xml:space="preserve"><value>PID</value></data>
+  <data name="ColUser" xml:space="preserve"><value>Utilisateur</value></data>
+  <data name="ColHandle" xml:space="preserve"><value>Handle</value></data>
+  <data name="ColFile" xml:space="preserve"><value>Fichier</value></data>
+  <data name="CheckFileGroup" xml:space="preserve"><value>Vérifier un fichier — qui le verrouille ?</value></data>
+  <data name="CheckFileHint" xml:space="preserve"><value>Chemin complet, ex. E:\docs\fichier.txt</value></data>
+  <data name="CheckFileButton" xml:space="preserve"><value>Qui le verrouille ?</value></data>
+  <data name="Browse" xml:space="preserve"><value>Parcourir…</value></data>
+  <data name="StatusReady" xml:space="preserve"><value>Prêt</value></data>
+  <data name="StatusScanning" xml:space="preserve"><value>Analyse…</value></data>
+  <data name="NotElevated" xml:space="preserve"><value>Utilisateur standard — élévation automatique si nécessaire (cliquer pour analyse complète)</value></data>
+  <data name="Elevated" xml:space="preserve"><value>Élevé</value></data>
+  <data name="AboutText" xml:space="preserve"><value>FluentBlock 0.2.26 — liste les processus avec fichiers ouverts sur lecteurs amovibles.</value></data>
+  <data name="ScanProgress" xml:space="preserve"><value>Analyse des handles {0}/{1}…</value></data>
+  <data name="ScanFailedHandles" xml:space="preserve"><value>Impossible de lire les handles système (erreur 0x{0:X8}). Essayez en administrateur.</value></data>
+  <data name="LocksFound" xml:space="preserve"><value>{0} handles ouverts</value></data>
+  <data name="RmFallback" xml:space="preserve"><value>Restart Manager : aucun résultat, analyse des handles…</value></data>
+  <data name="VetoUnknown" xml:space="preserve"><value>Inconnu</value></data>
+  <data name="VetoLegacyDevice" xml:space="preserve"><value>Périphérique hérité</value></data>
+  <data name="VetoPendingClose" xml:space="preserve"><value>Fichiers ouverts</value></data>
+  <data name="VetoWindowsApp" xml:space="preserve"><value>Application</value></data>
+  <data name="VetoWindowsService" xml:space="preserve"><value>Service</value></data>
+  <data name="VetoOutstandingOpen" xml:space="preserve"><value>Handle ouvert</value></data>
+  <data name="VetoDevice" xml:space="preserve"><value>Périphérique</value></data>
+  <data name="VetoDriver" xml:space="preserve"><value>Pilote</value></data>
+  <data name="VetoIllegalDeviceRequest" xml:space="preserve"><value>Requête non valide</value></data>
+  <data name="VetoInsufficientPower" xml:space="preserve"><value>Alimentation insuffisante</value></data>
+  <data name="VetoNonDisableable" xml:space="preserve"><value>Périphérique non désactivable</value></data>
+  <data name="VetoLegacyDriver" xml:space="preserve"><value>Pilote hérité</value></data>
+  <data name="VetoInsufficientRights" xml:space="preserve"><value>Droits insuffisants</value></data>
+  <data name="EjectOk" xml:space="preserve"><value>Le périphérique peut être retiré en toute sécurité.</value></data>
+  <data name="MenuTimeout" xml:space="preserve"><value>Délai</value></data>
+  <data name="EjectDialogTitle" xml:space="preserve"><value>Impossible d'éjecter le périphérique</value></data>
+  <data name="EjectVetoCause" xml:space="preserve"><value>Bloqué par {0} : {1}.</value></data>
+  <data name="EjectVetoRemedy" xml:space="preserve"><value>Que faire : 1) Enregistrez votre travail dans les programmes listés ci-dessous. 2) Fermez ces programmes (ou au moins les fichiers ouverts sur ce lecteur). 3) Cliquez à nouveau sur Éjecter.</value></data>
+  <data name="EjectErrorCause" xml:space="preserve"><value>Échec de l'éjection (erreur 0x{0:X8}).</value></data>
+  <data name="EjectErrorRemedy" xml:space="preserve"><value>Que faire : 1) Fermez tous les programmes qui utilisent ce lecteur, puis cliquez à nouveau sur Éjecter. 2) Si ça échoue encore, attendez quelques secondes et réessayez. 3) En dernier recours, utilisez « Retirer le périphérique en toute sécurité » de Windows.</value></data>
+  <data name="EjectBlockersTitle" xml:space="preserve"><value>Programmes qui bloquent l'éjection ({0}) :</value></data>
+  <data name="EjectNoBlockers" xml:space="preserve"><value>Aucun fichier ouvert trouvé — le blocage est peut-être temporaire (aperçu de l'Explorateur, antivirus ou indexation). Attendez quelques secondes puis cliquez à nouveau sur Éjecter.</value></data>
+  <data name="EjectProtectedTitle" xml:space="preserve"><value>Programmes protégés impossibles à inspecter ({0}) :</value></data>
+  <data name="EjectProtectedHint" xml:space="preserve"><value>Windows signale un handle ouvert détenu par l'un de ces programmes protégés (souvent l'antivirus). Mettez-le en pause ou fermez-le, puis cliquez à nouveau sur Éjecter.</value></data>
+  <data name="ScanTimeout" xml:space="preserve"><value>Analyse expirée — réessayez.</value></data>
+  <data name="MenuAutostart" xml:space="preserve"><value>Démarrer avec Windows</value></data>
+  <data name="FilterHint" xml:space="preserve"><value>Filtrer par processus ou nom de fichier</value></data>
+  <data name="MenuCopyPath" xml:space="preserve"><value>Copier le chemin</value></data>
+  <data name="MenuOpenLocation" xml:space="preserve"><value>Ouvrir l'emplacement du fichier</value></data>
+  <data name="ColAccess" xml:space="preserve"><value>Accès</value></data>
+  <data name="MenuExportCsv" xml:space="preserve"><value>Exporter CSV</value></data>
+  <data name="MenuExportTsv" xml:space="preserve"><value>Exporter TSV</value></data>
+  <data name="MenuShowLog" xml:space="preserve"><value>Afficher le journal</value></data>
+  <data name="MenuChangelog" xml:space="preserve"><value>_Changelog</value></data>
+  <data name="ChangelogTitle" xml:space="preserve"><value>Changelog — ce qui a changé dans chaque version</value></data>
+  <data name="ChangelogBody" xml:space="preserve"><value>• 0.2.26 — Les scans ne bloquent plus l'UI : limite de 60 secondes avec message clair, et le compteur avance à nouveau.
+• 0.2.25 — Fini les freezes de plusieurs secondes : noms en parallèle, utilisateur seulement pour les trouvés.
+• 0.2.24 — Le journal affiche la durée des scans, pour distinguer filtres AV lents et blocages.
+• 0.2.23 — Éjection : nomme aussi les bloqueurs cachés (programmes protégés, ex. antivirus) et réanalyse approfondie.
+• 0.2.22 — Correction des langues mélangées : chaque fenêtre suit la langue UI choisie.
+• 0.2.21 — Curseur d'attente pendant l'éjection ; changelog dans la langue UI.
+• 0.2.20 — Menu Changelog (cette liste).
+• 0.2.19 — Éjection bloquée : programmes exacts nommés, icône rouge et marche à suivre.
+• 0.2.18 — Élévation automatique à la demande ; UI toujours en utilisateur standard, glisser-déposer toujours actif.
+• 0.2.17 — Démarre en utilisateur standard, pas d'UAC au lancement.
+• 0.2.16 — Bascule Utilisateur/Admin, coller depuis le presse-papiers.
+• 0.2.15 — Délai de scan configurable (50–500 ms).
+• 0.2.14 — Motifs de veto traduits dans la langue UI.
+• 0.2.13 — Dialogue dédié pour l'éjection échouée.
+• 0.2.12 — Codes de veto corrects et noms de périphériques lisibles.
+• 0.2.11 / 0.2.10 — Icône À propos nette.
+• 0.2.9 / 0.2.8 / 0.2.7 / 0.2.6 — Installation dans Program Files, setup versionné, lancement post-installation.
+• 0.2.5 — Slogan et dialogue À propos avec grande icône.
+• 0.2.4 — Avertissement quand le glisser-déposer est bloqué (élevé).
+• 0.2.3 — Chaînes entières corrigées dans toutes les langues.
+• 0.2.2 — Sources et docs en anglais.
+• 0.2.1 — Glisser-déposer sur le champ fichier.
+• 0.2.0 — Éjection sûre, colonne Accès, export CSV/TSV, actualisation USB auto, journal.
+• 0.1.5 — Séparateur déplaçable, icônes vectorielles, animations de scan.
+• 0.1.4 — Chemins UNC et lecteurs mappés pris en charge.
+• 0.1.3 — Correctifs d'audit, actualisation F5, fonctionne non-admin.
+• 0.1.2 — Scan rapide et robuste (moteur style handle64).
+• 0.1.1 — Détection des SSD USB externes.
+• 0.1.0 — Base initiale : verrous par lecteur, vérification fichier, EFIGS, style Fluent.</value></data>
+  <data name="EjectError" xml:space="preserve"><value>Échec de l'éjection (erreur 0x{0:X8}).</value></data>
+  <data name="EjectConfirmTitle" xml:space="preserve"><value>Éjecter le périphérique ?</value></data>
+  <data name="EjectConfirmText" xml:space="preserve"><value>{0} handles ouverts sur ce lecteur. Éjecter quand même ?</value></data>
+  <data name="BrowseTitle" xml:space="preserve"><value>Sélectionner un fichier ou un dossier</value></data>
+  <data name="Paste" xml:space="preserve"><value>Coller</value></data>
+  <data name="PasteHint" xml:space="preserve"><value>Coller un fichier copié ou un chemin</value></data>
+  <data name="ClipboardEmpty" xml:space="preserve"><value>Le presse-papiers ne contient ni fichier ni chemin.</value></data>
+</root>

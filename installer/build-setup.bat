@@ -11,4 +11,4 @@ if not defined ISCC (
   exit /b 1
 )
 for /f "usebackq delims=" %%v in ("%~dp0..\VERSION") do set "VER=%%v"
-"%ISCC%" "/DAppVersion=%VER%" "%~dp0FluentSblock.iss"
+"%ISCC%" "/DAppVersion=%VER%" "%~dp0FluentBlock.iss"

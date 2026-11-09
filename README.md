@@ -1,9 +1,9 @@
-# FluentSblock — who holds files open?
+# FluentBlock — who holds files open?
 
 Shows which programs hold open files on removable drives and block safe
 ejection — and who is holding a given file locked.
 
-![FluentSblock main window](docs/screenshot.png)
+![FluentBlock main window](docs/screenshot.png)
 
 ## Features
 
@@ -20,13 +20,13 @@ ejection — and who is holding a given file locked.
 ## Download
 
 Get the latest release from the
-[releases page](https://github.com/ciskje/FluentSblock/releases/latest):
+[releases page](https://github.com/ciskje/FluentBlock/releases/latest):
 
 | File | What |
 |---|---|
-| `FluentSblock-Setup-X.Y.Z.exe` | Machine installer into Program Files (needs admin): Start Menu entry, Settings uninstall, no .NET needed |
-| `FluentSblock.msix` | Signed MSIX package (clean identity). First install the cert: double-click `installer/FluentSblock.cer` → Local Machine (admin) → Trusted People, then open the `.msix` |
-| `FluentSblock.exe` | Single self-contained app (no install, no .NET needed) |
+| `FluentBlock-Setup-X.Y.Z.exe` | Machine installer into Program Files (needs admin): Start Menu entry, Settings uninstall, no .NET needed |
+| `FluentBlock.msix` | Signed MSIX package (clean identity). First install the cert: double-click `installer/FluentBlock.cer` → Local Machine (admin) → Trusted People, then open the `.msix` |
+| `FluentBlock.exe` | Single self-contained app (no install, no .NET needed) |
 
 Unsigned builds: on first run SmartScreen shows a blue screen → "More info" → "Run anyway".
 
@@ -55,8 +55,8 @@ See [`AGENT.md`](AGENT.md) (agent spec) and [`TODO.md`](TODO.md) (roadmap).
 Requirements: .NET 8 SDK (`8.0.425`), Windows 10 1809+ / 11 x64.
 
 ```bat
-dotnet build src\FluentSblock\FluentSblock.csproj --artifacts-path C:/Temp/opencode/FluentSblock-artifacts -c Debug
-dotnet test src\FluentSblock.Tests\FluentSblock.Tests.csproj -c Debug
+dotnet build src\FluentBlock\FluentBlock.csproj --artifacts-path C:/Temp/opencode/FluentBlock-artifacts -c Debug
+dotnet test src\FluentBlock.Tests\FluentBlock.Tests.csproj -c Debug
 ```
 
 `run-debug.bat` launches the Debug build (no UAC at launch; elevation is automatic on demand).

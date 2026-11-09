@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="AppTitle" xml:space="preserve"><value>FluentBlock — wer hält Dateien offen?</value></data>
+  <data name="MenuFile" xml:space="preserve"><value>_Datei</value></data>
+  <data name="MenuView" xml:space="preserve"><value>_Ansicht</value></data>
+  <data name="MenuHelp" xml:space="preserve"><value>_Hilfe</value></data>
+  <data name="MenuRefresh" xml:space="preserve"><value>_Aktualisieren</value></data>
+  <data name="MenuEject" xml:space="preserve"><value>_Auswerfen</value></data>
+  <data name="MenuExit" xml:space="preserve"><value>_Beenden</value></data>
+  <data name="MenuTheme" xml:space="preserve"><value>_Design</value></data>
+  <data name="MenuLanguage" xml:space="preserve"><value>_Sprache</value></data>
+  <data name="MenuAbout" xml:space="preserve"><value>_Info</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>System</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Hell</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dunkel</value></data>
+  <data name="DriveGroup" xml:space="preserve"><value>Wechseldatenträger</value></data>
+  <data name="NoDrives" xml:space="preserve"><value>Keine Wechseldatenträger gefunden.</value></data>
+  <data name="HoldersGroup" xml:space="preserve"><value>Programme mit geöffneten Dateien</value></data>
+  <data name="NoLocks" xml:space="preserve"><value>Keine geöffneten Dateien — sicher auszuwerfen.</value></data>
+  <data name="ColProcess" xml:space="preserve"><value>Prozess</value></data>
+  <data name="ColPid" xml:space="preserve"><value>PID</value></data>
+  <data name="ColUser" xml:space="preserve"><value>Benutzer</value></data>
+  <data name="ColHandle" xml:space="preserve"><value>Handle</value></data>
+  <data name="ColFile" xml:space="preserve"><value>Datei</value></data>
+  <data name="CheckFileGroup" xml:space="preserve"><value>Datei prüfen — wer blockiert sie?</value></data>
+  <data name="CheckFileHint" xml:space="preserve"><value>Vollständiger Pfad, z. B. E:\docs\datei.txt</value></data>
+  <data name="CheckFileButton" xml:space="preserve"><value>Wer blockiert?</value></data>
+  <data name="Browse" xml:space="preserve"><value>Durchsuchen…</value></data>
+  <data name="StatusReady" xml:space="preserve"><value>Bereit</value></data>
+  <data name="StatusScanning" xml:space="preserve"><value>Suche…</value></data>
+  <data name="NotElevated" xml:space="preserve"><value>Standardbenutzer — automatische Erhöhung bei Bedarf (für Vollscan klicken)</value></data>
+  <data name="Elevated" xml:space="preserve"><value>Erhöht</value></data>
+  <data name="AboutText" xml:space="preserve"><value>FluentBlock 0.2.26 — listet Prozesse mit geöffneten Dateien auf Wechseldatenträgern.</value></data>
+  <data name="ScanProgress" xml:space="preserve"><value>Handles werden gescannt {0}/{1}…</value></data>
+  <data name="ScanFailedHandles" xml:space="preserve"><value>System-Handles konnten nicht gelesen werden (Fehler 0x{0:X8}). Als Administrator versuchen.</value></data>
+  <data name="LocksFound" xml:space="preserve"><value>{0} offene Handles</value></data>
+  <data name="RmFallback" xml:space="preserve"><value>Restart Manager: kein Ergebnis, Handles werden gescannt…</value></data>
+  <data name="VetoUnknown" xml:space="preserve"><value>Unbekannt</value></data>
+  <data name="VetoLegacyDevice" xml:space="preserve"><value>Legacy-Gerät</value></data>
+  <data name="VetoPendingClose" xml:space="preserve"><value>Geöffnete Dateien</value></data>
+  <data name="VetoWindowsApp" xml:space="preserve"><value>Anwendung</value></data>
+  <data name="VetoWindowsService" xml:space="preserve"><value>Dienst</value></data>
+  <data name="VetoOutstandingOpen" xml:space="preserve"><value>Geöffnetes Handle</value></data>
+  <data name="VetoDevice" xml:space="preserve"><value>Gerät</value></data>
+  <data name="VetoDriver" xml:space="preserve"><value>Treiber</value></data>
+  <data name="VetoIllegalDeviceRequest" xml:space="preserve"><value>Ungültige Anforderung</value></data>
+  <data name="VetoInsufficientPower" xml:space="preserve"><value>Unzureichende Stromversorgung</value></data>
+  <data name="VetoNonDisableable" xml:space="preserve"><value>Nicht deaktivierbares Gerät</value></data>
+  <data name="VetoLegacyDriver" xml:space="preserve"><value>Legacy-Treiber</value></data>
+  <data name="VetoInsufficientRights" xml:space="preserve"><value>Unzureichende Rechte</value></data>
+  <data name="EjectOk" xml:space="preserve"><value>Das Gerät kann sicher entfernt werden.</value></data>
+  <data name="MenuTimeout" xml:space="preserve"><value>Zeitlimit</value></data>
+  <data name="EjectDialogTitle" xml:space="preserve"><value>Gerät kann nicht ausgeworfen werden</value></data>
+  <data name="EjectVetoCause" xml:space="preserve"><value>Blockiert durch {0}: {1}.</value></data>
+  <data name="EjectVetoRemedy" xml:space="preserve"><value>So gehen Sie vor: 1) Speichern Sie Ihre Arbeit in den unten aufgeführten Programmen. 2) Schließen Sie diese Programme (oder zumindest die auf diesem Laufwerk geöffneten Dateien). 3) Klicken Sie erneut auf Auswerfen.</value></data>
+  <data name="EjectErrorCause" xml:space="preserve"><value>Auswerfen fehlgeschlagen (Fehler 0x{0:X8}).</value></data>
+  <data name="EjectErrorRemedy" xml:space="preserve"><value>So gehen Sie vor: 1) Schließen Sie alle Programme, die dieses Laufwerk verwenden, und klicken Sie erneut auf Auswerfen. 2) Falls es weiterhin fehlschlägt, warten Sie einige Sekunden und versuchen Sie es erneut. 3) Als letzte Möglichkeit verwenden Sie „Hardware sicher entfernen“ von Windows.</value></data>
+  <data name="EjectBlockersTitle" xml:space="preserve"><value>Programme, die das Auswerfen blockieren ({0}):</value></data>
+  <data name="EjectNoBlockers" xml:space="preserve"><value>Keine geöffneten Dateien gefunden — die Blockierung ist möglicherweise temporär (Explorer-Vorschau, Antivirus oder Indizierung). Warten Sie einige Sekunden und klicken Sie erneut auf Auswerfen.</value></data>
+  <data name="EjectProtectedTitle" xml:space="preserve"><value>Geschützte Programme, die nicht geprüft werden konnten ({0}):</value></data>
+  <data name="EjectProtectedHint" xml:space="preserve"><value>Windows meldet ein geöffnetes Handle eines dieser geschützten Programme (oft das Antivirusprogramm). Halten Sie es an oder schließen Sie es und klicken Sie erneut auf Auswerfen.</value></data>
+  <data name="ScanTimeout" xml:space="preserve"><value>Scan-Zeitüberschreitung — erneut versuchen.</value></data>
+  <data name="MenuAutostart" xml:space="preserve"><value>Mit Windows starten</value></data>
+  <data name="FilterHint" xml:space="preserve"><value>Nach Prozess oder Dateiname filtern</value></data>
+  <data name="MenuCopyPath" xml:space="preserve"><value>Pfad kopieren</value></data>
+  <data name="MenuOpenLocation" xml:space="preserve"><value>Dateispeicherort öffnen</value></data>
+  <data name="ColAccess" xml:space="preserve"><value>Zugriff</value></data>
+  <data name="MenuExportCsv" xml:space="preserve"><value>CSV exportieren</value></data>
+  <data name="MenuExportTsv" xml:space="preserve"><value>TSV exportieren</value></data>
+  <data name="MenuShowLog" xml:space="preserve"><value>Protokoll anzeigen</value></data>
+  <data name="MenuChangelog" xml:space="preserve"><value>_Changelog</value></data>
+  <data name="ChangelogTitle" xml:space="preserve"><value>Changelog — was sich in jeder Version geändert hat</value></data>
+  <data name="ChangelogBody" xml:space="preserve"><value>• 0.2.26 — Scans blockieren die UI nicht mehr: 60-Sekunden-Limit mit klarer Meldung, und der Zähler läuft wieder mit.
+• 0.2.25 — Keine mehrsekündigen Scan-Hänger mehr: parallele Namensabfragen, Benutzer nur für Treffer.
+• 0.2.24 — Protokoll zeigt Scan-Dauer, um langsame AV-Filter von Hängern zu unterscheiden.
+• 0.2.23 — Auswerfen: nennt auch verborgene Blockierer (geschützte Programme, z. B. Antivirus) plus Tiefenscan.
+• 0.2.22 — Gemischte Sprachen behoben: jedes Fenster folgt der gewählten UI-Sprache.
+• 0.2.21 — Wartecursor beim Auswerfen; Changelog in UI-Sprache.
+• 0.2.20 — Changelog-Menü (diese Liste).
+• 0.2.19 — Blockiertes Auswerfen: genaue Programme genannt, rotes Symbol, Schritt-für-Schritt-Anleitung.
+• 0.2.18 — Automatische Erhöhung bei Bedarf; UI immer als Standardbenutzer, Drag-and-drop immer aktiv.
+• 0.2.17 — Start als Standardbenutzer, keine UAC beim Start.
+• 0.2.16 — Benutzer/Admin-Wechsel, Einfügen aus Zwischenablage.
+• 0.2.15 — Konfigurierbares Scan-Zeitlimit (50–500 ms).
+• 0.2.14 — Veto-Gründe in UI-Sprache übersetzt.
+• 0.2.13 — Eigener Dialog für fehlgeschlagenes Auswerfen.
+• 0.2.12 — Korrekte Veto-Codes und lesbare Gerätenamen.
+• 0.2.11 / 0.2.10 — Scharfes Info-Symbol.
+• 0.2.9 / 0.2.8 / 0.2.7 / 0.2.6 — Installation in Programme, versioniertes Setup, Start nach Installation.
+• 0.2.5 — Slogan und Info-Dialog mit großem Symbol.
+• 0.2.4 — Warnung wenn Drag-and-drop blockiert ist (erhöht).
+• 0.2.3 — Volle Zeichenketten in allen Sprachen korrigiert.
+• 0.2.2 — Quellen und Docs auf Englisch.
+• 0.2.1 — Drag-and-drop auf das Datei-Feld.
+• 0.2.0 — Sicheres Auswerfen, Zugriff-Spalte, CSV/TSV-Export, USB-Autoaktualisierung, Protokoll.
+• 0.1.5 — Ziehbarer Trenner, Vektorsymbole, Scan-Animationen.
+• 0.1.4 — UNC- und Netzlaufwerk-Pfade unterstützt.
+• 0.1.3 — Audit-Fixes, F5-Aktualisierung, läuft nicht-eleviert.
+• 0.1.2 — Schneller robuster Scan (Engine im handle64-Stil).
+• 0.1.1 — Erkennung externer USB-SSDs.
+• 0.1.0 — Erste Basis: Sperren pro Laufwerk, Dateiprüfung, EFIGS, Fluent-Stil.</value></data>
+  <data name="EjectError" xml:space="preserve"><value>Auswerfen fehlgeschlagen (Fehler 0x{0:X8}).</value></data>
+  <data name="EjectConfirmTitle" xml:space="preserve"><value>Gerät auswerfen?</value></data>
+  <data name="EjectConfirmText" xml:space="preserve"><value>{0} offene Handles auf diesem Laufwerk. Trotzdem auswerfen?</value></data>
+  <data name="BrowseTitle" xml:space="preserve"><value>Datei oder Ordner auswählen</value></data>
+  <data name="Paste" xml:space="preserve"><value>Einfügen</value></data>
+  <data name="PasteHint" xml:space="preserve"><value>Kopierte Datei oder Pfad einfügen</value></data>
+  <data name="ClipboardEmpty" xml:space="preserve"><value>Zwischenablage enthält keine Datei und keinen Pfad.</value></data>
+</root>
