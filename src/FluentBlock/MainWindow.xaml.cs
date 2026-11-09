@@ -519,6 +519,9 @@ public partial class MainWindow : Window
     {
         string path = FilePathBox.Text.Trim().Trim('"');
         if (string.IsNullOrEmpty(path)) return;
+        // A file answer now beats a drive refresh: cancel any in-flight drive
+        // scan so the two full scans don't starve each other (mass expiry).
+        _cts?.Cancel();
         _fileHolders.Clear();
         var progress = new Progress<string>(s => ProgressText.Text = s);
         StatusText.Text = L10n.Get("StatusScanning");
@@ -529,6 +532,7 @@ public partial class MainWindow : Window
         CheckFileBtn.IsEnabled = false;
         try
         {
+            Log.Info($"file check start path={path}");
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
             var holders = await FileLockChecker.WhoLocksAsync(path, progress, cts.Token);
             foreach (var h in holders) _fileHolders.Add(h);
@@ -537,7 +541,7 @@ public partial class MainWindow : Window
                 : string.Format(L10n.Get("LocksFound"), holders.Count);
             PaintStatus(holders.Count == 0 ? "SuccessBrush" : "WarningBrush");
         }
-        catch (Exception ex) { ProgressText.Text = ex.Message; PaintStatus("ErrorBrush"); }
+        catch (Exception ex) { ProgressText.Text = ex.Message; PaintStatus("ErrorBrush"); Log.Info($"file check fail: {ex.Message}"); }
         finally
         {
             StopSpinners(CheckFileSpin);
