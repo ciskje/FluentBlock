@@ -131,8 +131,8 @@ Goal: faster, robust scan following the real handle64.exe flow
 - [x] `DrainPending` always terminates under burst wedge: final drain expires wedged queued queries instead of hanging to caller cancellation, no infinite wait when everything billable expires in one sweep (was: 4 min hang to CTS in the golden test under load)
 - [x] `ChangelogBody` 0.2.26 entry in 5 languages; `AboutText` 0.2.26; `VERSION`+csproj `0.2.26`
 - [ ] Manual test: insert stick on a sick box — within 60 s the UI is usable again with the timeout message
-- [ ] Tag `v0.2.26`
-
+- [x] Tag `v0.2.26`
+- [x] Release v0.2.26 (Latest): `dist/` realigned (exe+setup-0.2.26+README+VERSION.txt, no MSIX per request), GitHub release with 2 assets
 ## 0.2.25 — no more multi-second scan freezes
 
 - [x] Name queries on a shared queue with 8 pool threads: one stuck pipe/minifilter occupies at most all workers while the rest keeps flowing (was: 1 worker, full timeout per stuck handle, frozen counter)
